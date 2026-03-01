@@ -1,0 +1,78 @@
+\section{Empirical Strategy}
+
+The empirical objective is to identify the dynamic causal pass-through from tradable
+inflation, $\pi^T_{it}$, to non-tradable inflation, $\pi^N_{it}$, in a monthly panel of
+19 euro area countries.
+Because tradable and non-tradable inflation comove with common demand conditions and
+aggregate cost pressures, ordinary least squares conflates pass-through with spurious
+comovement; identification requires an external source of variation in $\pi^T_{it}$
+that is orthogonal to domestic non-tradable conditions.
+The instrument is a Bartik shift-share of the form $Z_{it} = w_{it} \cdot Z_t$, where
+$w_{it}$ is the tradables expenditure share of country $i$'s CPI basket in month $t$
+--- computed as the sum of ECOICOP expenditure weights for food, clothing, furnishings,
+transport, and alcohol --- and $Z_t$ is the market-based oil price expectation shock of
+\citet{baumeister2019}.
+Heterogeneity in $w_{it}$ across countries and over time ensures that the same common
+oil shock translates into proportionally larger cost impulses for countries with larger
+tradables baskets, generating cross-sectional identifying variation that is unrelated to
+idiosyncratic domestic conditions.
+The exclusion restriction requires that $Z_{it}$ affects non-tradable prices only through
+its effect on tradable inflation; any direct transmission through energy costs in service
+production is absorbed by twelve lags of both inflation series and the unemployment rate,
+and country fixed effects absorb permanent cross-country differences in non-tradable price
+setting.
+Time fixed effects are excluded because they would absorb $Z_t$, eliminating the
+instrument.
+
+The dynamic pass-through is estimated horizon by horizon following the local projection
+method of \citet{jorda2005}.
+The first stage establishes instrument relevance by regressing tradable inflation on $Z_{it}$
+and controls:
+\begin{equation}
+    \pi^T_{it}
+    = \alpha_i
+    + \lambda\, Z_{it}
+    + \sum_{\ell=1}^{L} \boldsymbol{\gamma}_\ell'\, \mathbf{x}_{i,t-\ell}
+    + v_{it},
+    \label{eq:firststage}
+\end{equation}
+where $\alpha_i$ are country fixed effects, $Z_{it} = w_{it}\cdot Z_t$ is the
+Bartik instrument, and
+$\mathbf{x}_{i,t-\ell} = (\pi^N_{i,t-\ell},\,\pi^T_{i,t-\ell},\,u_{i,t-\ell})'$
+collects lags of non-tradable inflation, tradable inflation, and the unemployment rate.
+The second stage projects non-tradable inflation $h$ months ahead onto instrumented
+tradable inflation:
+\begin{equation}
+    \pi^N_{i,t+h}
+    = \alpha_i
+    + \theta_h\,\widehat{\pi^T}_{it}
+    + \sum_{\ell=1}^{L} \boldsymbol{\gamma}_\ell'\, \mathbf{x}_{i,t-\ell}
+    + \varepsilon_{i,t+h},
+    \quad h = 0, 1, \ldots, H,
+    \label{eq:lpiv}
+\end{equation}
+where $\widehat{\pi^T}_{it}$ denotes tradable inflation instrumented by $Z_{it}$.
+The sequence $\{\theta_h\}_{h=0}^{H}$ traces the dynamic second-round pass-through from
+tradable to non-tradable inflation, with cumulative pass-through at horizon $H$ given by
+$\sum_{h=0}^{H}\theta_h$.
+The main specification uses $H = 13$ monthly horizons and $L = 12$ lags; standard errors
+are robust to heteroskedasticity throughout.
+
+To assess whether pass-through varies across economic states, equation~\eqref{eq:lpiv}
+is estimated separately for subsamples defined by regime indicators, an approach that
+avoids the need for an additional excluded instrument to identify the triple interaction
+$\widehat{\pi^T}_{it} \cdot D_{it}$.
+Three regime dimensions are considered.
+First, the sample is split according to whether the Global Supply Chain Pressure Index
+(GSCPI) of \citet{benigno2022} is above or below its standardised long-run mean of zero,
+separating episodes of supply-chain stress from normal logistical conditions.
+Second, the sample is split by the sign of the log monthly change in the nominal effective
+exchange rate, $\Delta\ln\mathrm{NEER}_{it}$, testing for asymmetric pass-through between
+appreciation and depreciation episodes.
+Third, the inflation environment is defined by whether lagged headline HICP inflation
+exceeds the ECB's 2 percent target; using the lagged value ensures the regime indicator
+is predetermined with respect to the outcome.
+Each subsample retains the same instrument, controls, and fixed effects as the baseline
+specification.
+The full sample spans January 1998 to December 2025, with pre- and post-2020 sub-periods
+reported to assess parameter stability around the pandemic energy-price episode.
