@@ -56,7 +56,7 @@ The sequence $\{\theta_h\}_{h=0}^{H}$ traces the dynamic second-round pass-throu
 tradable to non-tradable inflation, with cumulative pass-through at horizon $H$ given by
 $\sum_{h=0}^{H}\theta_h$.
 The main specification uses $H = 13$ monthly horizons and $L = 12$ lags; standard errors
-are robust to heteroskedasticity throughout.
+are clustered at the country level throughout.
 
 To assess whether pass-through varies across economic states, equation~\eqref{eq:lpiv}
 is estimated separately for subsamples defined by regime indicators, an approach that
@@ -69,10 +69,224 @@ separating episodes of supply-chain stress from normal logistical conditions.
 Second, the sample is split by the sign of the log monthly change in the nominal effective
 exchange rate, $\Delta\ln\mathrm{NEER}_{it}$, testing for asymmetric pass-through between
 appreciation and depreciation episodes.
-Third, the inflation environment is defined by whether lagged headline HICP inflation
-exceeds the ECB's 2 percent target; using the lagged value ensures the regime indicator
-is predetermined with respect to the outcome.
+Third, the inflation environment is characterised by a 36-month rolling standard deviation
+of headline HICP inflation, $\hat{\sigma}_{it}$, split at each country's own within-country
+median rolling standard deviation, $\tilde{\sigma}_i$; periods in which
+$\hat{\sigma}_{it} > \tilde{\sigma}_i$ are classified as high-volatility, capturing episodes
+of elevated price instability relative to a country's own historical norm.
 Each subsample retains the same instrument, controls, and fixed effects as the baseline
 specification.
 The full sample spans January 1998 to December 2025, with pre- and post-2020 sub-periods
 reported to assess parameter stability around the pandemic energy-price episode.
+
+\section{Results}
+
+\subsection{Baseline Pass-Through}
+
+\autoref{fig:lp_base} reports the LP-IV impulse response of non-tradable inflation to a
+one-percentage-point instrumented increase in tradable inflation, estimated over the full
+sample using the Bartik instrument $Z_{it} = w_{it}\cdot Z_t$ with twelve lags and country
+fixed effects.
+The response is identified at 90 percent confidence intervals throughout.
+The point estimates are strictly positive at every horizon, with the 90 percent confidence
+band lying entirely above zero throughout the thirteen-month window, indicating that
+second-round pass-through is statistically significant at all horizons.
+The response rises from approximately 0.18 at impact to a first peak of 0.93 at month six,
+dips modestly to 0.75 at month eight, recovers to a second peak of 0.93 at month ten, and
+then declines to 0.54 at the end of the horizon.
+This double-humped shape suggests that the transmission of tradable cost pressures into
+non-tradable prices operates through at least two channels that operate at different lags:
+a faster channel — plausibly direct input-cost pass-through — that peaks around month six,
+and a slower channel — consistent with wage bargaining and second-round service-price
+adjustment — that re-amplifies the response around month ten.
+Cumulatively, the pass-through at twelve months amounts to a substantial and persistent
+propagation of tradable shocks into non-tradable inflation, consistent with the TVP-VAR
+evidence in \citet{andriantomanga2025}, who documents positive spillovers from tradable to
+non-tradable inflation for a broader panel of 40 countries, and providing a causal LP-IV
+counterpart to that reduced-form result.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../output/figures/g_lp_base.pdf}
+    \caption{Baseline LP-IV impulse response of non-tradable inflation to a one-percentage-point
+    increase in tradable inflation. The instrument is the Bartik shift-share
+    $Z_{it} = w_{it}\cdot Z_t$, where $w_{it}$ is the country-time-varying tradables
+    expenditure share and $Z_t$ is the market-based oil price expectation shock of
+    \citet{baumeister2019}. Specification: 12 lags, country fixed effects, full sample.
+    Shaded band: 90\% confidence interval (standard errors clustered at the country level).}
+    \label{fig:lp_base}
+\end{figure}
+
+\subsection{State-Dependent Pass-Through}
+
+Whether the second-round pass-through documented above is stable across economic states
+or amplified in particular conditions is the central question of the regime analysis.
+Three binary regime indicators partition the estimation sample, and equation~\eqref{eq:lpiv}
+is re-estimated on each subsample with the same instrument, controls, and fixed effects as
+the baseline.
+Estimating separate LP-IVs within each subsample avoids the need for an additional excluded
+instrument to identify the interaction term $\widehat{\pi^T}_{it}\cdot D_{it}$.
+
+The first dimension captures global supply-chain conditions through the GSCPI of
+\citet{benigno2022}:
+\begin{equation*}
+    D^{\mathrm{GSCPI}}_t = \mathbf{1}\bigl[\mathrm{GSCPI}_t > \tilde{q}\bigr],
+\end{equation*}
+where $\tilde{q}$ denotes the panel median of the GSCPI series; because the index is
+standardised with mean zero and unit variance, the median threshold is approximately zero,
+so the high-stress subsample captures episodes of above-normal logistical disruption.
+The second dimension isolates the direction of the exchange rate:
+\begin{equation*}
+    D^{\mathrm{NEER}}_{it} = \mathbf{1}\bigl[\Delta\ln\mathrm{NEER}_{it} < 0\bigr],
+\end{equation*}
+where $D^{\mathrm{NEER}}_{it} = 1$ denotes depreciation months, in which imported cost
+pressures are amplified relative to appreciation episodes.
+The third dimension measures the inflation volatility environment:
+\begin{equation*}
+    D^{\sigma}_{it} = \mathbf{1}\bigl[\hat{\sigma}_{it} > \tilde{\sigma}_i\bigr],
+\end{equation*}
+where $\hat{\sigma}_{it}$ is the 36-month rolling standard deviation of headline HICP
+inflation for country $i$ at time $t$, and $\tilde{\sigma}_i$ is the within-country
+median of that rolling standard deviation; high-volatility periods correspond to episodes
+of elevated price instability relative to a country's own historical norm.
+
+\autoref{fig:regimes} presents the six impulse responses arranged in a $3\times 2$ panel,
+with the low-regime subsamples on the left and the high-regime subsamples on the right,
+with 90 percent confidence intervals shown separately for each.
+
+Along the supply-chain dimension, the contrast between the two subsamples is sharp.
+During low-GSCPI periods, the response oscillates between 0.1 and 0.5 and the confidence
+band crosses zero at multiple horizons, leaving the pass-through statistically indistinguishable
+from zero for much of the window.
+During high-GSCPI periods, the response rises from 0.35 at impact to a plateau of
+approximately 1.5 between months six and ten, with the 90 percent band lying entirely above
+zero from month two onward.
+The near-tripling of peak pass-through under supply-chain stress is consistent with the
+mechanism that logistics disruptions compress firms' substitution margin between imported
+and domestic inputs, forcing service-sector producers to absorb a larger share of upstream
+cost shocks rather than switching suppliers; under normal logistical conditions that margin
+is wider and cost pressures are more readily diversified away.
+For monetary policy, this finding implies that a central bank that calibrates its response
+to second-round effects using normal-times estimates will systematically underreact when
+global supply chains are under stress.
+
+The exchange rate dimension reveals the most pronounced asymmetry in the dataset.
+During appreciation episodes ($\Delta\ln\mathrm{NEER}_{it} > 0$), the response is near
+zero at impact, rises to a modest peak of about 0.55 at month six, and then reverses,
+falling to approximately $-0.5$ by months twelve and thirteen; the confidence band crosses
+zero repeatedly and the overall response is statistically indistinguishable from zero
+across most of the horizon.
+During depreciation episodes, the picture is entirely different: the response rises
+strongly from 0.35 at impact to a sustained peak of approximately 2.05 at month ten,
+with the confidence band remaining well above zero throughout.
+The asymmetry is large in magnitude — depreciation pass-through at its peak is roughly
+four times the appreciation peak — and carries a clear economic interpretation: when the
+effective exchange rate depreciates, import costs rise in domestic currency terms, amplifying
+the cost impulse received by non-tradable producers; when it appreciates, the offsetting
+import-cost relief attenuates or reverses the propagation.
+From a monetary policy standpoint, this asymmetry implies that exchange rate depreciation
+episodes sharply amplify the risk of tradable shocks becoming entrenched in domestic
+service prices, while appreciation provides a natural buffer against such propagation.
+
+Along the inflation volatility dimension, high-volatility periods display substantially
+stronger pass-through than low-volatility periods.
+When inflation volatility is below the within-country median, the response peaks at
+approximately 0.55 and the confidence band includes zero at several horizons, indicating
+moderate and imprecisely estimated pass-through.
+When volatility is above the within-country median, the response rises steeply to a peak
+of 1.5 at month six and remains above 1.0 through month thirteen, with the confidence band
+staying above zero throughout.
+The pattern is consistent with the view that elevated price instability shortens the
+effective duration of price contracts and lowers the threshold at which service-sector
+firms choose to adjust prices, so that a given tradable cost impulse translates into a
+larger and more immediate adjustment in non-tradable prices.
+
+Taken together, the regime results indicate that second-round pass-through is not a
+stable structural constant but rises sharply when global supply chains are disrupted,
+when the exchange rate is depreciating, and when the domestic inflation environment is
+already volatile --- three conditions that mutually reinforced one another during the
+2021--22 inflation episode in the euro area.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../output/figures/g_regimes.pdf}
+    \caption{State-dependent LP-IV impulse responses of non-tradable inflation.
+    Each panel reports the response to a one-percentage-point increase in instrumented
+    tradable inflation within the indicated subsample.
+    Rows correspond to three regime dimensions: global supply-chain pressure (GSCPI above
+    vs.\ below panel median), nominal effective exchange rate direction (appreciation
+    vs.\ depreciation), and inflation volatility (36-month rolling standard deviation of
+    headline HICP above vs.\ below within-country median).
+    Instrument: Bartik shift-share $Z_{it} = w_{it}\cdot Z_t$.
+    Specification: 12 lags, country fixed effects, full sample.
+    Shaded bands: 90\% confidence intervals (standard errors clustered at the country level).}
+    \label{fig:regimes}
+\end{figure}
+
+\subsection{Robustness}
+
+\paragraph{Instrument robustness.}
+\autoref{fig:lp_rob_w} compares the baseline Bartik instrument against two alternatives:
+a Bartik scaled by import exposure ($w^{\mathrm{imp}}_{it} = \mathrm{imports}/\mathrm{GDP}$)
+and the unscaled market-based oil price shock $Z_t$ used directly without country-level
+weighting.
+The import-exposure Bartik captures a different dimension of openness — the share of
+domestic expenditure that is sourced from abroad — while the unscaled instrument exploits
+only the common time-series variation in $Z_t$ and relies on country fixed effects to
+absorb permanent differences in exposure.
+Ninety-percent confidence intervals are shown for the baseline specification only.
+The three point estimate paths are virtually indistinguishable across the entire thirteen-month
+horizon: all three rise together from approximately 0.18 at impact to peaks of 0.93 at month
+six and 0.93 at month ten, with the import-to-GDP Bartik and the unscaled shock tracking
+the baseline so closely that the lines are nearly superimposed throughout.
+This near-perfect agreement across instruments that exploit different sources of cross-country
+heterogeneity — the tradables share of the CPI basket, the aggregate import intensity, and
+the common time-series variation alone — strongly supports the conclusion that the pass-through
+estimate is not an artifact of any particular exposure weighting and is robust to the choice
+of how the common oil shock is scaled across countries.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../output/figures/g_lp_base_rob_w.pdf}
+    \caption{Instrument robustness: LP-IV impulse responses under three instrument
+    specifications. Baseline (solid, blue): Bartik instrument $Z_{it} = w_{it}\cdot Z_t$,
+    where $w_{it}$ is the tradables expenditure share.
+    Robustness 1 (dashed, red): Bartik scaled by import-to-GDP ratio,
+    $Z_{it} = (m_{it}/y_{it})\cdot Z_t$.
+    Robustness 2 (short-dashed, grey): unscaled oil price shock $Z_t$.
+    Specification: 12 lags, country fixed effects, pre-2020 sample.
+    Shaded band (baseline only): 90\% confidence interval.}
+    \label{fig:lp_rob_w}
+\end{figure}
+
+\paragraph{Sample robustness.}
+\autoref{fig:lp_samples} overlays the baseline LP-IV response with pre-2020 and post-2020
+sub-period estimates, using the same instrument and controls throughout.
+The ninety-percent confidence band is shown for the full-sample estimate only.
+The post-2020 period is characterised by energy price interventions, administered price
+caps, and supply disruptions that altered the normal relationship between global oil price
+shocks and euro area tradable inflation.
+\autoref{fig:lp_samples} reveals a dramatic divergence across sub-periods.
+The pre-2020 path peaks at approximately 0.47 at month six and fades toward zero by month
+thirteen, implying a pass-through roughly half the full-sample estimate at its peak.
+The post-2020 path is strikingly larger: it rises steeply from 0.30 at impact, peaks at
+approximately 2.02 at month ten, and remains above 1.5 even at the end of the horizon.
+The full-sample estimate sits between the two, reflecting the average of a moderate pre-2020
+regime and a substantially amplified post-2020 regime.
+This divergence suggests that the 2020--22 period was characterised by an unusual intensity
+of second-round propagation, plausibly driven by the confluence of supply-chain disruptions,
+exchange rate depreciation, and rising inflation volatility documented in \autoref{fig:regimes}.
+The pre-2020 sample therefore provides the cleaner estimate of the stable, long-run structural
+pass-through parameter, while the post-2020 results illustrate the conditions under which
+second-round effects can amplify substantially.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../output/figures/g_lp_samples.pdf}
+    \caption{Sample robustness: LP-IV impulse responses over the full sample (solid, blue),
+    pre-2020 subsample (short-dashed, grey), and post-2020 subsample (dashed, red).
+    Instrument: Bartik shift-share $Z_{it} = w_{it}\cdot Z_t$.
+    Specification: 12 lags, country fixed effects.
+    Shaded band (full sample only): 90\% confidence interval.}
+    \label{fig:lp_samples}
+\end{figure}
