@@ -1,0 +1,24 @@
+\begin{table}[htbp]
+  \centering
+  \caption{Data Sources}
+  \label{tab:sources}
+  \begin{tabular}{llp{5cm}}
+    \toprule
+    Variable & Description & Source \\
+    \midrule
+    \texttt{pi\_headline} & Headline HICP inflation (YoY, \%) & Eurostat \texttt{prc\_hicp\_midx} \\
+    \texttt{pi\_trad} & Tradable inflation, Eq.~(\ref{eq:basket}), $\mathcal{B}=\mathcal{T}$ & Authors' construction \\
+    \texttt{pi\_nontrad} & Non-tradable inflation, Eq.~(\ref{eq:basket}), $\mathcal{B}=\mathcal{N}$ & Authors' construction \\
+    \texttt{w\_food}, \texttt{w\_clothing}, \ldots & Annual ECOICOP expenditure weights (normalized) & Eurostat \texttt{prc\_hicp\_inw} \\
+    \texttt{bh\_oil\_price\_exp\_shock} & Market-based oil price expectation shock & \citet{baumeister2019} \\
+    \texttt{bh\_oil\_supply\_shock} & Structural oil supply shock & \citet{baumeister2019} \\
+    \texttt{gscpi} & Global Supply Chain Pressure Index & \citet{benigno2022} \\
+    \texttt{dln\_neer} & Log monthly change in nominal effective exchange rate & ECB Data Portal API \\
+    \texttt{ur} & Unemployment rate, seasonally adjusted (\% of active population) & Eurostat \texttt{une\_rt\_m} \\
+    \texttt{ip\_gr\_yoy} & Manufacturing IP growth, year-over-year (\%) & Eurostat \texttt{sts\_inpr\_m} \\
+    \texttt{wi\_imp\_gdp} & Imports of goods and services (\% of GDP) & Eurostat \texttt{nama\_10\_gdp} \\
+    \midrule
+    \multicolumn{3}{l}{\footnotesize\textit{Note:} ECOICOP tradable basket $\mathcal{T}$: CP01, CP02, CP03, CP05, CP07. Non-tradable basket $\mathcal{N}$: CP04, CP06, CP08, CP09, CP10, CP11, CP12.}
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,63 @@
+\section{Data}
+
+The data consist of a panel of 19 euro area member states observed at monthly frequency from
+January 1998 to December 2025, assembled from Eurostat and the ECB Data Portal.
+Data for Croatia are available from January 1999; all remaining members are observed over
+the full period, yielding 6,384 country-month observations in total.
+Table~\ref{tab:summary} presents summary statistics.
+Table~\ref{tab:sources} documents data sources.
+Table~\ref{tab:coverage} lists country coverage with sample start and end dates and
+observation counts.
+
+The central data contribution of this paper is the construction of country-specific tradable and
+non-tradable inflation measures directly from disaggregated HICP components following the
+European Classification of Individual Consumption according to Purpose (ECOICOP).
+For each country $i$ and ECOICOP division $j$, price indices are downloaded from Eurostat
+dataset \texttt{prc\_hicp\_midx} (monthly, index base 2015\,=\,100) and annual expenditure
+shares from \texttt{prc\_hicp\_inw}.
+The year-over-year inflation rate for component $j$ is
+$\pi_{ijt} = 100\times(P_{ijt}/P_{ij,t-12}-1)$,
+where $P_{ijt}$ denotes the price level index.
+Tradable and non-tradable inflation are then expenditure-weighted averages of component
+inflation rates within each basket:
+\begin{equation}
+    \pi^k_{it} = \frac{\sum_{j \in \mathcal{k}} w_{ijt} \, \pi_{ijt}}{\sum_{j \in \mathcal{k}} w_{ijt}},
+    \quad k \in \{T, N\}
+    \label{eq:basket}
+\end{equation}
+where $w_{ijt}$ is the expenditure share of component $j$ in country $i$ at time $t$, expanded
+to monthly frequency by assigning each month the annual weight of its calendar year.
+The tradable basket $\mathcal{T}$ comprises CP01 (food and non-alcoholic beverages), CP02
+(alcoholic beverages and tobacco), CP03 (clothing and footwear), CP05 (furnishings and
+household equipment), and CP07 (transport).
+The non-tradable basket $\mathcal{N}$ comprises CP04 (housing, water, electricity, and gas),
+CP06 (health), CP08 (communication), CP09 (recreation and culture), CP10 (education),
+CP11 (restaurants and hotels), and CP12 (miscellaneous goods and services).
+Expenditure shares are normalized to sum to one across the twelve ECOICOP divisions.
+Most existing work proxies tradable inflation using producer price indices or import prices
+rather than constructing it directly from disaggregated consumer price components with
+matching time-varying expenditure weights \citep{ha2023}; the present approach follows the
+HICP-based decomposition of \citet{andriantomanga2025}, who applies the same
+classification scheme to a broader sample of 40 countries covering the period from January
+2000 to August 2022.
+
+The analysis draws on four additional groups of variables.
+The oil price shock series are from \citet{baumeister2019}: the market-based oil price
+expectation shock captures forward-looking shifts in the expected path of oil prices, while the
+structural oil supply shock isolates exogenous disruptions to global crude output identified
+via sign and magnitude restrictions.
+Global supply chain conditions enter through the Global Supply Chain Pressure Index (GSCPI)
+of \citet{benigno2022}, which aggregates shipping costs, airfreight rates, and purchasing
+managers' index backlogs into a single composite barometer of international logistics
+disruptions.
+Domestic cyclical conditions are captured by the seasonally adjusted unemployment rate
+(percent of the active population) from Eurostat dataset \texttt{une\_rt\_m} and by the
+year-over-year growth rate of the seasonally and calendar-adjusted manufacturing
+production index from Eurostat dataset \texttt{sts\_inpr\_m}.
+External monetary conditions enter through the log monthly change in the ECB nominal
+effective exchange rate against 40 trading partners, retrieved from the ECB Data Portal API.
+Import exposure is measured as imports of goods and services as a share of GDP from
+Eurostat national accounts dataset \texttt{nama\_10\_gdp}, expanded to monthly frequency
+by carrying forward each annual observation for the corresponding calendar year.
+Summary statistics, data sources, and country coverage are reported in
+Tables~\ref{tab:summary}--\ref{tab:coverage}.
