@@ -1,0 +1,135 @@
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\onehalfspacing
+
+\title{When Tradable Inflation Becomes Domestic: Second-Round Effects and Monetary Policy Trade-Offs}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Motivation and research question}
+
+Inflation dynamics in open economies depend not only on external cost pressures, but on how these pressures propagate into domestic prices that are directly relevant for monetary policy. While imported cost shocks primarily affect tradable prices, their policy relevance hinges on whether and how they generate second-round effects on non-tradable inflation. When such pass-through is weak, central banks may optimally look through imported inflation. When it is strong, imported shocks can lead to persistent domestic inflation, fundamentally altering policy trade-offs.
+
+This project focuses on a central but under-measured object: the dynamic causal pass-through from tradable inflation to non-tradable inflation. The empirical analysis aims to identify this pass-through using exogenous variation in imported costs and to assess how it varies across economic states. The estimated pass-through is then interpreted as a structural parameter governing second-round inflation dynamics in a small open economy model.
+
+The core research questions are:
+
+\begin{enumerate}
+\item What is the dynamic causal pass-through from tradable inflation to non-tradable inflation, and how persistent are second-round effects following imported cost shocks?
+\item How does this pass-through vary across economic states, such as high versus low inflation regimes, periods of slack, and differences in openness or structural characteristics?
+\item How do empirically relevant values of tradable-to-non-tradable pass-through affect optimal monetary policy trade-offs between stabilizing headline inflation and stabilizing domestic inflation?
+\end{enumerate}
+
+
+\section{Main contributions}
+
+\begin{enumerate}
+\item Empirical identification of the dynamic pass-through from tradable to non-tradable inflation using a panel local-projection instrumental-variables (LP-IV) framework, in which tradable inflation is instrumented by exogenous imported-cost shocks.
+
+\item Evidence on the state dependence of second-round inflation dynamics, documenting how the strength and persistence of tradable-to-non-tradable pass-through varies across inflation regimes, economic slack, and country characteristics such as openness.
+
+\item Structural interpretation of the estimated pass-through within a two-sector small open economy New Keynesian model, in which the empirically estimated pass-through governs endogenous inflation propagation.
+
+\item Policy evaluation comparing alternative monetary policy rules under different empirically relevant pass-through regimes, quantifying the welfare costs of policy misalignment when second-round effects are strong.
+\end{enumerate}
+
+
+\section{Empirical strategy}
+
+\subsection{Empirical objective}
+
+The empirical analysis aims to identify the dynamic causal pass-through from tradable inflation to non-tradable inflation in EMU countries. The object of interest is the second-round propagation of external cost pressures into domestic prices, which is later interpreted as a structural parameter governing inflation dynamics in the model.
+
+The key challenge is to isolate exogenous variation in tradable inflation that is not driven by domestic non-tradable conditions, monetary policy reactions, or common demand shocks within the monetary union.
+
+\subsection{Sample and inflation objects}
+
+The analysis uses a monthly panel of 19 EMU countries over the period 1998--2024. For each country $i$, two inflation series are constructed as weighted averages of harmonised HICP components, using time-varying CPI expenditure weights:
+\begin{itemize}
+  \item Tradable inflation, $\pi^T_{i,t}$: food, clothing and footwear, furnishings, transport, and alcohol and tobacco.
+  \item Non-tradable inflation, $\pi^N_{i,t}$: housing, health, education, restaurants and hotels, communication, recreation and culture, and miscellaneous services.
+\end{itemize}
+The classification follows the ECB's HICP decomposition into goods and services, adapted for the EMU context. Focusing on EMU countries ensures a common monetary policy and exchange rate, which simplifies identification by removing cross-country differences in policy responses as a confounding factor.
+
+\subsection{Instrument: market-based oil price shock}
+
+Identification relies on the market-based oil price shock constructed by \citet{baumeister2019structural}, denoted $Z_t$. This shock captures unanticipated movements in the real price of oil driven by expectations and market conditions, and is used directly as an external instrument for tradable inflation. The structural oil supply shock from the same source is included as a control variable in all specifications, so the instrument captures only the non-supply component of oil price variation that is less likely to be correlated with domestic determinants of non-tradable inflation.
+
+\paragraph{Exclusion restriction.} The identifying assumption is that $Z_t$ affects non-tradable inflation only through its effect on tradable inflation. The market oil price shock primarily affects import costs and producer prices in the tradable sector, with any spillover to non-tradable prices occurring through the cost pass-through channel that is the object of interest. The restriction is supported by conditioning on domestic slack, lags of both inflation series, and the structural oil supply shock, which together absorb alternative channels.
+
+\paragraph{Note on identification relative to the original proposal.} The original identification strategy proposed a Bartik shift-share design of the form $Z_{i,t} = w_i \cdot Z_t$, where $w_i$ is a country-specific import exposure weight and identification arises from cross-country differences in predetermined exposure interacting with a common shock. However, the Baumeister--Hamilton structural oil supply shock is a pure time series with no cross-sectional variation, so time fixed effects absorb it entirely. Diagnostic tests confirmed that the first-stage Kleibergen--Paap $F$-statistic for any exposure-scaled Bartik instrument is below unity in the pre-2020 sample, rendering the design invalid. The market-based price shock $Z_t$ instead produces a strong, correctly-signed first stage ($F > 100$ in the pre-2020 sample). The current specification therefore uses $Z_t$ directly as the instrument without country-level exposure scaling, and relies on time-series variation for identification. Country fixed effects are retained throughout; time fixed effects are excluded because they would absorb the instrument.
+
+\subsection{First-stage relevance}
+
+The first stage establishes that the market oil price shock generates significant movements in tradable inflation:
+\begin{equation}
+\pi^T_{i,t}
+=
+\alpha_i
++ \lambda Z_t
++ \sum_{\ell=1}^{L} a_\ell \pi^T_{i,t-\ell}
++ \sum_{\ell=1}^{L} b_\ell x_{i,t-\ell}
++ \delta_{\text{supply}} Z^{\text{supply}}_t
++ v_{i,t},
+\label{eq:firststage}
+\end{equation}
+where $\alpha_i$ are country fixed effects, $x_{i,t}$ denotes domestic economic slack (unemployment), $Z^{\text{supply}}_t$ is the structural oil supply shock included as a control, and $L = 12$ lags. The instrument is excluded from the second stage.
+
+\subsection{Baseline LP-IV: second-round pass-through}
+
+To estimate the causal effect of tradable inflation on non-tradable inflation, the analysis employs a local projection instrumental variables (LP-IV) framework. For each horizon $h = 0, 1, \dots, H$, the second-stage equation is:
+\begin{equation}
+\pi^N_{i,t+h}
+=
+\alpha_i
++ \theta_h \widehat{\pi^T}_{i,t}
++ \sum_{\ell=1}^{L} c_\ell \pi^N_{i,t-\ell}
++ \sum_{\ell=1}^{L} d_\ell x_{i,t-\ell}
++ \delta_{\text{supply}} Z^{\text{supply}}_t
++ e_{i,t+h},
+\label{eq:lpiv}
+\end{equation}
+where $\widehat{\pi^T}_{i,t}$ denotes tradable inflation instrumented by $Z_t$. Country fixed effects are absorbed via within-country demeaning. Standard errors are clustered at the country level. The main specification uses $H = 13$ months and $L = 12$ lags.
+
+The sequence $\{\theta_h\}_{h=0}^{H}$ traces the dynamic second-round pass-through from tradable to non-tradable inflation. Cumulative pass-through at horizon $H$ is given by $\sum_{h=0}^{H} \theta_h$.
+
+\subsection{State-dependent pass-through}
+
+To assess whether pass-through varies across economic states, the LP-IV in equation~\eqref{eq:lpiv} is estimated separately for subsamples defined by regime indicators. This approach avoids the need to instrument the interaction term $\widehat{\pi^T}_{i,t} \cdot D_{i,t}$, which would require an additional excluded instrument. Three regime dimensions are considered:
+
+\begin{enumerate}
+  \item \textbf{Global supply chain conditions.} The sample is split according to whether the Global Supply Chain Pressure Index (GSCPI) of \citet{benigno2022global} exceeds zero, its long-run standardised mean. High-GSCPI periods capture episodes of supply chain stress including 2010--11, 2017--18, and 2020--22; low-GSCPI periods capture normal conditions.
+
+  \item \textbf{Exchange rate direction.} The sample is split by the sign of the log change in the nominal effective exchange rate, $\Delta \ln \mathrm{NEER}_{i,t}$. Appreciation periods ($\Delta \ln \mathrm{NEER} > 0$) are associated with lower imported cost pressure; depreciation periods with higher imported cost pressure. This tests for the asymmetric pass-through documented in the exchange rate literature.
+
+  \item \textbf{Inflation environment.} The sample is split by whether the 12-month lag of headline HICP inflation exceeds 2 percent, the ECB's target. Using the lagged value ensures the regime indicator is predetermined with respect to the outcome, avoiding simultaneity. High-inflation periods correspond to above-target environments; low-inflation periods to at-or-below target environments.
+\end{enumerate}
+
+Each subsample retains the same instrument, controls, and fixed effects as the baseline. The Kleibergen--Paap $F$-statistic is reported for each subsample to verify first-stage relevance.
+
+\subsection{Sample considerations}
+
+The main results are reported for the pre-2020 sample. This choice is motivated by two considerations. First, first-stage relevance deteriorates sharply in the post-2020 period: the Kleibergen--Paap $F$-statistic falls below one with 12 lags, reflecting the breakdown of the normal relationship between oil prices and EMU tradable inflation during the energy crisis, when administered price interventions and supply disruptions dominated. Second, the 2021--22 episode constitutes a structural break in inflation dynamics, making the post-2020 estimates unreliable as a stable structural parameter. Full-sample results and post-2020 estimates are reported as robustness checks.
+
+\subsection{Inference and empirical moments}
+
+Standard errors are clustered at the country level throughout. The empirical analysis delivers the following moments that directly discipline the structural model:
+\begin{itemize}
+  \item Dynamic LP-IV impulse responses of $\pi^N$ to exogenous movements in $\pi^T$, at horizons $h = 0, 1, \dots, 13$ months.
+  \item Cumulative tradable-to-non-tradable pass-through at the 12-month horizon.
+  \item State-dependent pass-through differentials across supply chain, exchange rate, and inflation regimes.
+\end{itemize}
+
+\paragraph{Identification summary.} The market-based oil price shock provides exogenous time-series variation in tradable inflation. Country fixed effects absorb permanent differences across EMU members. Conditioning on the structural oil supply shock isolates the non-supply component of the instrument. The LP-IV framework rules out reverse causality and demand-driven comovement. Identification is supported by strong first-stage relevance ($F > 100$ in the pre-2020 baseline) and is robust to alternative lag lengths and sample periods.
+
+\end{document}

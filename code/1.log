@@ -1,0 +1,266 @@
+
+  ___  ____  ____  ____  ____ ©
+ /__    /   ____/   /   ____/      17.0
+___/   /   /___/   /   /___/       SE—Standard Edition
+
+ Statistics and Data Science       Copyright 1985-2021 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: 100-student lab perpetual
+Serial number: 401706316154
+  Licensed to: Zo Andriantomanga
+               University of Wisconsin-Milwaukee
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. Maximum number of variables is set to 5,000; see help set_maxvar.
+
+. do 1.0_LP_base.do 
+
+. 
+. * Run this do-file from the code/ directory.
+. * From the project root in Stata: cd code
+. * Then: do 1.0_LP_base.do
+. cap cd code
+
+. 
+. clear all
+
+. cap drop _all
+
+. cap graph drop _all
+
+. 
+. *============================================================================
+> ===
+. * Graph Settings
+. *============================================================================
+> ===
+. grstyle clear
+
+. set scheme s2color
+
+. grstyle init
+
+. grstyle set plain, horizontal grid 
+
+. grstyle set symbol
+
+. grstyle set legend 10, inside nobox 
+
+. 
+. *============================================================================
+> ===
+. * Load & Panel Setup
+. *============================================================================
+> ===
+. use "../data/clean/panel.dta"
+
+. 
+. egen id = group(code)
+
+. sort code year month
+
+. gen time = ym(year, month)
+
+. format time %tm
+
+. xtset id time
+
+Panel variable: id (strongly balanced)
+ Time variable: time, 1998m1 to 2025m12
+         Delta: 1 month
+
+. 
+. *============================================================================
+> ===
+. * Tradable & Non-Tradable Inflation
+. *============================================================================
+> ===
+. 
+. * ── Tradable ───────────────────────────────────────────────────────────────
+> ───
+. gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
+
+. 
+. gen pi_trad = (pi_food        * w_food        ///
+>              + pi_clothing    * w_clothing     ///
+>              + pi_furnishing  * w_furnishing   ///
+>              + pi_transport   * w_transport    ///
+>              + pi_alcohol     * w_alcohol)     ///
+>              / w_trad
+(12 missing values generated)
+
+. 
+. label var pi_trad "Tradable Inflation (Food, Clothing, Furnishing, Transport,
+>  Alcohol)"
+
+. 
+. * ── Non-Tradable ───────────────────────────────────────────────────────────
+> ───
+. gen w_nontrad = w_housing + w_health + w_education ///
+>               + w_restaurants + w_other             ///
+>               + w_communication + w_recreation
+
+. 
+. gen pi_nontrad = (pi_housing       * w_housing       ///
+>                 + pi_health        * w_health        ///
+>                 + pi_education     * w_education     ///
+>                 + pi_restaurants   * w_restaurants   ///
+>                 + pi_other         * w_other         ///
+>                 + pi_communication * w_communication ///
+>                 + pi_recreation    * w_recreation)   ///
+>                 / w_nontrad
+(47 missing values generated)
+
+. 
+. label var pi_nontrad "Non-Tradable Inflation (Housing, Health, Education, Res
+> taurants, Other, Comm, Recreation)"
+note: label truncated to 80 characters
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: Second-Round Pass-Through
+. * Baseline specification
+. *   Instrument:  Z_bartik = w_trad x bh_oil_price_exp_shock
+. *   Control:     
+. *   FE:          Country only (time FE would absorb common-shock instrument)
+. *   Lags:        12 (standard for monthly data)
+. *   Sample:      Full
+. *============================================================================
+> ===
+. 
+. global hmax = 13
+
+. global lags  = 12
+
+. 
+. * ── Bartik Instrument ──────────────────────────────────────────────────────
+> ───
+. * Exposure weight: tradables share of CPI basket (w_trad)
+. * Shock: market-based oil price shock (Baumeister & Hamilton 2019)
+. gen Z_bartik = w_trad * bh_oil_price_exp_shock
+(608 missing values generated)
+
+. label var Z_bartik "Bartik IV: Tradables Weight x Market Oil Price Shock"
+
+. 
+. 
+. 
+. * ── Forward LHS Variables ──────────────────────────────────────────────────
+> ───
+. forv h = 0/$hmax {
+  2.     gen pi_nt_h`h' = F`h'.pi_nontrad
+  3.     label var pi_nt_h`h' "Non-Tradable Inflation, horizon h=`h'"
+  4. }
+(47 missing values generated)
+(64 missing values generated)
+(81 missing values generated)
+(98 missing values generated)
+(115 missing values generated)
+(132 missing values generated)
+(149 missing values generated)
+(166 missing values generated)
+(183 missing values generated)
+(200 missing values generated)
+(217 missing values generated)
+(234 missing values generated)
+(251 missing values generated)
+(269 missing values generated)
+
+. 
+. * ── IRF Storage Variables ──────────────────────────────────────────────────
+> ───
+. cap drop b u d Months Zero Fstat
+
+. gen Months = _n - 1 if _n <= $hmax + 1
+(6,370 missing values generated)
+
+. gen Zero   = 0      if _n <= $hmax + 1
+(6,370 missing values generated)
+
+. gen b      = .
+(6,384 missing values generated)
+
+. gen u      = .
+(6,384 missing values generated)
+
+. gen d      = .
+(6,384 missing values generated)
+
+. gen Fstat  = .
+(6,384 missing values generated)
+
+. 
+. * ── LP-IV Loop ─────────────────────────────────────────────────────────────
+> ───
+. qui forv h = 0/$hmax {
+
+. 
+. * ── First Stage Diagnostics ────────────────────────────────────────────────
+> ───
+. di "First-stage Kleibergen-Paap F-statistics by horizon:"
+First-stage Kleibergen-Paap F-statistics by horizon:
+
+. list Months Fstat if Months != .
+
+      +-------------------+
+      | Months      Fstat |
+      |-------------------|
+   1. |      0   200.4902 |
+   2. |      1   200.4902 |
+   3. |      2   200.4902 |
+   4. |      3   200.4902 |
+   5. |      4   200.4902 |
+      |-------------------|
+   6. |      5   200.4902 |
+   7. |      6   200.4902 |
+   8. |      7   200.4902 |
+   9. |      8   200.4902 |
+  10. |      9   200.4902 |
+      |-------------------|
+  11. |     10   200.4902 |
+  12. |     11   200.4902 |
+  13. |     12   200.4902 |
+  14. |     13   200.4902 |
+      +-------------------+
+
+. 
+. * ── Plot IRF ───────────────────────────────────────────────────────────────
+> ───
+. twoway ///
+>     (rarea u d Months,                              ///
+>         fcolor(blue%20) lcolor(blue%20)             ///
+>         lw(none) lpattern(solid))                   ///
+>     (line b Months,                                 ///
+>         lcolor(blue) lpattern(solid) lwidth(thick)) ///
+>     (line Zero Months,                              ///
+>         lcolor(black) lpattern(dash)),              ///
+>     legend(off)                                     ///
+>     title("Second-Round Pass-Through:"              ///
+>           "Tradable {&rarr} Non-Tradable Inflation", ///
+>           color(black) size(medsmall))              ///
+>     ytitle("{&theta}{subscript:h}", size(medsmall)) ///
+>     xtitle("Months after shock", size(medsmall))    ///
+>     xlabel(0(2)12) xscale(range(0 12))              ///
+>     ylabel(, labsize(small) format(%5.2f))          ///
+>     note("90% CI. Bartik IV: w{subscript:trad} {&times} BH oil price shock." 
+> ///
+>          "12 lags. Country FE.", size(vsmall)) ///
+>     graphregion(color(white))
+
+. 
+. gr rename g_lp_base, replace
+(note: graph g_lp_base not found)
+
+. graph export "../output/figures/g_lp_base.pdf", replace
+file ../output/figures/g_lp_base.pdf saved as PDF format
+
+. 
+end of do-file

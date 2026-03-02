@@ -1,4 +1,78 @@
-\section{Empirical Strategy}
+\section{Introduction}
+
+The post-pandemic inflation episode in the euro area generated an extensive debate about
+its origins and persistence.
+Leading explanations in the literature point to demand-side pressures from fiscal stimulus
+and the pandemic-era reallocation of household expenditure, supply-chain disruptions that
+constrained the production of manufactured goods, large shocks to energy and food prices,
+and concern that inflation expectations had become unanchored from the ECB's target.
+This paper argues that a complementary and underexplored mechanism contributed to the
+persistence of that episode: strong second-round pass-through from tradable to non-tradable
+inflation.
+When external cost shocks propagate into service prices, inflation becomes harder to
+forecast, more persistent, and more costly to reverse, because the domestic wage and
+price-setting process amplifies the initial impulse rather than simply absorbing it.
+The policy question, then, is not only what caused the original shock but whether and how
+quickly it becomes embedded in the domestic prices that are directly relevant for the
+ECB's inflation target.
+
+We study the dynamic causal pass-through from tradable to non-tradable inflation in a
+monthly panel of 19 euro area countries from January 1998 to December 2025.
+The EMU is the ideal laboratory for this question: the common monetary policy and shared
+exchange rate remove confounding cross-country variation in policy responses, so that
+heterogeneity in pass-through reflects genuine differences in structural conditions rather
+than differential interest rate or exchange rate reactions.
+The central data contribution is a new panel of disaggregated HICP components with
+time-varying ECOICOP expenditure weights, which allows us to construct tradable and
+non-tradable inflation directly from consumer price data rather than proxying with producer
+prices or import prices as most of the existing literature does
+\citep[see, e.g.,][]{ha2023}.
+Identification uses a panel local projection instrumental variables (LP-IV) estimator in
+which tradable inflation is instrumented by a Bartik shift-share
+$Z_{it} = w_{it}\cdot Z_t$, where $w_{it}$ is the country-time-varying tradables
+expenditure share of the CPI basket and $Z_t$ is the market-based oil price expectation
+shock of \citet{baumeister2019}.
+The shift-share structure ensures that the same common oil price impulse generates
+cross-sectionally heterogeneous variation in tradable inflation through differences in
+countries' basket compositions, providing identification that is orthogonal to
+country-specific demand conditions.
+
+The LP-IV impulse response of non-tradable inflation to a one-percentage-point
+increase in instrumented tradable inflation is strictly positive and statistically
+significant at all horizons over the thirteen-month estimation window.
+The response rises from 0.18 at impact to a first peak of 0.93 at month six, dips
+modestly to 0.75 at month eight, then recovers to a second peak of 0.93 at month ten
+before declining to 0.54 at the end of the horizon.
+This double-humped shape suggests two transmission channels operating at different lags:
+a faster input-cost channel that peaks around month six and a slower wage-bargaining
+channel that re-amplifies the response around month ten.
+The estimate is robust across three instrument variants that exploit different sources of
+cross-country variation, and stable across alternative lag structures.
+
+The headline finding is that second-round pass-through is not a structural constant but
+varies sharply with economic conditions.
+Under supply-chain stress --- as measured by the Global Supply Chain Pressure Index
+(GSCPI) of \citet{benigno2022} --- peak pass-through nearly triples relative to normal
+times, from below 0.5 to approximately 1.5.
+The exchange rate asymmetry is the most striking result: depreciation episodes generate
+a peak pass-through of approximately 2.05 at month ten, roughly four times the modest
+and statistically insignificant response during appreciation episodes; currency movements
+are therefore a first-order amplifier of second-round effects.
+High inflation volatility environments similarly display substantially stronger
+pass-through, consistent with elevated price instability lowering the threshold at which
+service-sector firms transmit cost shocks into prices.
+Critically, these three conditions --- supply-chain disruptions, exchange rate
+depreciation, and elevated price volatility --- mutually reinforced one another during
+the 2021--22 euro area inflation episode, providing a coherent structural account of why
+domestic service price inflation proved so persistent in that period.
+
+The remainder of the paper is organized as follows.
+Section~\ref{sec:data} describes the data.
+Section~\ref{sec:strategy} presents the empirical strategy.
+Section~\ref{sec:results} reports the results.
+Section~\ref{sec:conclusion} concludes.
+
+\section{Empirical Strategy}\label{sec:strategy}
 
 The empirical objective is to identify the dynamic causal pass-through from tradable
 inflation, $\pi^T_{it}$, to non-tradable inflation, $\pi^N_{it}$, in a monthly panel of
@@ -79,7 +153,7 @@ specification.
 The full sample spans January 1998 to December 2025, with pre- and post-2020 sub-periods
 reported to assess parameter stability around the pandemic energy-price episode.
 
-\section{Results}
+\section{Results}\label{sec:results}
 
 \subsection{Baseline Pass-Through}
 
