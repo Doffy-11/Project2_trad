@@ -38,7 +38,7 @@ coicop_map <- tribble(
 )
 
 # EMU countries (EA20 members as of 2023, in Eurostat geo codes)
-geo_emu <- c("AT","BE","CY","DE","EE","ES","FI","FR","GR","HR","IE","IT","LT","LU","LV","MT","NL","PT","SI","SK")
+geo_emu <- c("AT","BE","CY","DE","EE","ES","FI","FR","EL","HR","IE","IT","LT","LU","LV","MT","NL","PT","SI","SK")
 
 # If you want the EA aggregate too, uncomment:
 # geo_emu <- c("EA20", geo_emu)

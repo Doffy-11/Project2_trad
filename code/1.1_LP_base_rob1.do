@@ -84,7 +84,7 @@ label var Z_bartik_wi "Bartik IV: Import/GDP Weight x Market Oil Price Shock"
 label var Z_direct    "Direct IV: Market Oil Price Shock (no scaling)"
 
 * ── Sample restriction ────────────────────────────────────────────────────────
-*keep if year < 2020
+keep if year < 2020
 
 * ── Forward LHS Variables ─────────────────────────────────────────────────────
 forv h = 0/$hmax {
@@ -115,6 +115,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         , absorb(id ) vce(robust)
 
     replace b_wt     = _b[pi_trad]                       if _n == `h' + 1
@@ -130,6 +131,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         , absorb(id ) vce(robust)
     replace b_wi     = _b[pi_trad]                       if _n == `h' + 1
     replace u_wi     = _b[pi_trad] + 1.645*_se[pi_trad]  if _n == `h' + 1
@@ -144,6 +146,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         , absorb(id ) vce(robust)
     replace b_dir     = _b[pi_trad]                       if _n == `h' + 1
     replace u_dir     = _b[pi_trad] + 1.645*_se[pi_trad]  if _n == `h' + 1

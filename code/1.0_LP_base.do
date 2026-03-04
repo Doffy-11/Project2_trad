@@ -105,6 +105,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         , absorb(id ) vce(robust)
 
     replace b     = _b[pi_trad]                            if _n == `h' + 1

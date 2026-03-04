@@ -108,6 +108,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         , absorb(id ) vce(robust)
     replace b_full     = _b[pi_trad]                       if _n == `h' + 1
     replace u_full     = _b[pi_trad] + 1.645*_se[pi_trad]  if _n == `h' + 1
@@ -122,6 +123,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         if year < 2020                           ///
         , absorb(id ) vce(robust)
     replace b_pre     = _b[pi_trad]                       if _n == `h' + 1
@@ -137,6 +139,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_nontrad                    ///
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
         if year >= 2020                          ///
         , absorb(id ) vce(robust)
     replace b_post     = _b[pi_trad]                       if _n == `h' + 1
