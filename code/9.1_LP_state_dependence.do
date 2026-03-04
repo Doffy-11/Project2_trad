@@ -249,8 +249,8 @@ local f_vol_hi   = string(round(Fstat_vol_hi[1],    0.1))
 
 * ── GSCPI: Low ────────────────────────────────────────────────────────────────
 twoway ///
-    (rarea u90_gscpi_lo d90_gscpi_lo Months, fcolor(forest_green%20) lcolor(forest_green%20) lw(none)) ///
-    (line b_gscpi_lo Months, lcolor(forest_green) lpattern(solid) lwidth(thick)) ///
+    (rarea u90_gscpi_lo d90_gscpi_lo Months, fcolor(green%20) lcolor(green%20) lw(none)) ///
+    (line b_gscpi_lo Months, lcolor(green) lpattern(solid) lwidth(thick)) ///
     (line Zero Months, lcolor(black) lpattern(dash) lwidth(thin)), ///
     legend(off) title("Low Supply Chain Stress", size(small) color(black)) ///
     ytitle("{&theta}{subscript:h}", size(small)) xtitle("", size(small)) ///
@@ -260,8 +260,8 @@ gr rename g_gscpi_lo, replace
 
 * ── GSCPI: High ───────────────────────────────────────────────────────────────
 twoway ///
-    (rarea u90_gscpi_hi d90_gscpi_hi Months, fcolor(cranberry%20) lcolor(cranberry%20) lw(none)) ///
-    (line b_gscpi_hi Months, lcolor(cranberry) lpattern(solid) lwidth(thick)) ///
+    (rarea u90_gscpi_hi d90_gscpi_hi Months, fcolor(red%20) lcolor(red%20) lw(none)) ///
+    (line b_gscpi_hi Months, lcolor(red) lpattern(solid) lwidth(thick)) ///
     (line Zero Months, lcolor(black) lpattern(dash) lwidth(thin)), ///
     legend(off) title("High Supply Chain Stress", size(small) color(black)) ///
     ytitle("{&theta}{subscript:h}", size(small)) xtitle("", size(small)) ///
@@ -271,8 +271,8 @@ gr rename g_gscpi_hi, replace
 
 * ── NEER: Appreciation ────────────────────────────────────────────────────────
 twoway ///
-    (rarea u90_apprec_hi d90_apprec_hi Months, fcolor(forest_green%20) lcolor(forest_green%20) lw(none)) ///
-    (line b_apprec_hi Months, lcolor(forest_green) lpattern(solid) lwidth(thick)) ///
+    (rarea u90_apprec_hi d90_apprec_hi Months, fcolor(green%20) lcolor(green%20) lw(none)) ///
+    (line b_apprec_hi Months, lcolor(green) lpattern(solid) lwidth(thick)) ///
     (line Zero Months, lcolor(black) lpattern(dash) lwidth(thin)), ///
     legend(off) title("NEER Appreciation", size(small) color(black)) ///
     ytitle("{&theta}{subscript:h}", size(small)) xtitle("", size(small)) ///
@@ -282,8 +282,8 @@ gr rename g_apprec, replace
 
 * ── NEER: Depreciation ────────────────────────────────────────────────────────
 twoway ///
-    (rarea u90_apprec_lo d90_apprec_lo Months, fcolor(cranberry%20) lcolor(cranberry%20) lw(none)) ///
-    (line b_apprec_lo Months, lcolor(cranberry) lpattern(solid) lwidth(thick)) ///
+    (rarea u90_apprec_lo d90_apprec_lo Months, fcolor(red%20) lcolor(red%20) lw(none)) ///
+    (line b_apprec_lo Months, lcolor(red) lpattern(solid) lwidth(thick)) ///
     (line Zero Months, lcolor(black) lpattern(dash) lwidth(thin)), ///
     legend(off) title("NEER Depreciation", size(small) color(black)) ///
     ytitle("{&theta}{subscript:h}", size(small)) xtitle("", size(small)) ///
@@ -293,8 +293,8 @@ gr rename g_deprec, replace
 
 * ── Volatility: Low ───────────────────────────────────────────────────────────
 twoway ///
-    (rarea u90_vol_lo d90_vol_lo Months, fcolor(forest_green%20) lcolor(forest_green%20) lw(none)) ///
-    (line b_vol_lo Months, lcolor(forest_green) lpattern(solid) lwidth(thick)) ///
+    (rarea u90_vol_lo d90_vol_lo Months, fcolor(green%20) lcolor(green%20) lw(none)) ///
+    (line b_vol_lo Months, lcolor(green) lpattern(solid) lwidth(thick)) ///
     (line Zero Months, lcolor(black) lpattern(dash) lwidth(thin)), ///
     legend(off) title("Low Inflation Volatility", size(small) color(black)) ///
     ytitle("{&theta}{subscript:h}", size(small)) xtitle("Months after shock", size(small)) ///
@@ -304,8 +304,8 @@ gr rename g_vol_lo, replace
 
 * ── Volatility: High ──────────────────────────────────────────────────────────
 twoway ///
-    (rarea u90_vol_hi d90_vol_hi Months, fcolor(cranberry%20) lcolor(cranberry%20) lw(none)) ///
-    (line b_vol_hi Months, lcolor(cranberry) lpattern(solid) lwidth(thick)) ///
+    (rarea u90_vol_hi d90_vol_hi Months, fcolor(red%20) lcolor(red%20) lw(none)) ///
+    (line b_vol_hi Months, lcolor(red) lpattern(solid) lwidth(thick)) ///
     (line Zero Months, lcolor(black) lpattern(dash) lwidth(thin)), ///
     legend(off) title("High Inflation Volatility", size(small) color(black)) ///
     ytitle("{&theta}{subscript:h}", size(small)) xtitle("Months after shock", size(small)) ///

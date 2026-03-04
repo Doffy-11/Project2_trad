@@ -1,0 +1,466 @@
+
+  ___  ____  ____  ____  ____ ©
+ /__    /   ____/   /   ____/      17.0
+___/   /   /___/   /   /___/       SE—Standard Edition
+
+ Statistics and Data Science       Copyright 1985-2021 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: 100-student lab perpetual
+Serial number: 401706316154
+  Licensed to: Zo Andriantomanga
+               University of Wisconsin-Milwaukee
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. Maximum number of variables is set to 5,000; see help set_maxvar.
+
+. do code/8.0_LP_heterogeneity.do 
+
+. 
+. * Phase 5 — Heterogeneity Analysis
+. * Splits the EMU20 into three economically motivated groups and runs the
+. * baseline LP-IV specification separately for each:
+. *
+. *   Core         (country_group_n == 1): DEU, FRA, NLD, AUT, FIN, BEL  (N=6)
+. *   Periphery    (country_group_n == 2): ITA, ESP, PRT, GRC              (N=4
+> )
+. *   Small open   (country_group_n == 3): IRL, LUX, EST, LVA, LTU, SVK,
+. *                                        SVN, MLT, CYP, HRV             (N=10
+> )
+. *
+. * Specification identical to baseline (6.0_LP_EMU20_replication.do):
+. *   ivreghdfe pi_nt_h`h' (pi_trad = Z_bartik)
+. *             l(1/12).pi_nontrad l(1/12).pi_trad l(1/12).ur l(1/12).dln_neer
+. *             , absorb(id) vce(robust)
+. *
+. * Produces:
+. *   (1) Overlay IRF figure: all three groups on the same axes
+. *   (2) IRF CSV for table production: irf_heterogeneity.csv
+. *   (3) Pairwise group-difference t-statistics (independent samples):
+. *       t = (b_g1 - b_g2) / sqrt(se_g1^2 + se_g2^2)
+. *       reported at selected horizons h = 0, 3, 6, 9, 12
+. *
+. * Note on small samples: Periphery has only 4 countries. The first-stage
+. * F-statistic is reported; if KP F < 10 for any group the result is flagged.
+. 
+. cap cd code
+
+. 
+. clear all
+
+. cap drop _all
+
+. cap graph drop _all
+
+. 
+. *============================================================================
+> ===
+. * Graph Settings
+. *============================================================================
+> ===
+. grstyle clear
+
+. set scheme s2color
+
+. grstyle init
+
+. grstyle set plain, horizontal grid
+
+. grstyle set symbol
+
+. grstyle set legend 10, inside nobox
+
+. 
+. *============================================================================
+> ===
+. * Load full panel
+. *============================================================================
+> ===
+. use "../data/clean/panel.dta"
+
+. 
+. * Restrict to EMU20 (country_group_n 1-3)
+. keep if emu == 1
+(2,352 observations deleted)
+
+. 
+. egen id = group(code)
+
+. sort code year month
+
+. gen time = ym(year, month)
+
+. format time %tm
+
+. xtset id time
+
+Panel variable: id (strongly balanced)
+ Time variable: time, 1998m1 to 2025m12
+         Delta: 1 month
+
+. 
+. *============================================================================
+> ===
+. * Tradable & Non-Tradable Inflation (identical to baseline)
+. *============================================================================
+> ===
+. 
+. gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
+
+. 
+. gen pi_trad = (pi_food        * w_food        ///
+>              + pi_clothing    * w_clothing     ///
+>              + pi_furnishing  * w_furnishing   ///
+>              + pi_transport   * w_transport    ///
+>              + pi_alcohol     * w_alcohol)     ///
+>              / w_trad
+(12 missing values generated)
+
+. 
+. label var pi_trad "Tradable Inflation"
+
+. 
+. gen w_nontrad = w_housing + w_health + w_education ///
+>               + w_restaurants + w_other             ///
+>               + w_communication + w_recreation
+
+. 
+. gen pi_nontrad = (pi_housing       * w_housing       ///
+>                 + pi_health        * w_health        ///
+>                 + pi_education     * w_education     ///
+>                 + pi_restaurants   * w_restaurants   ///
+>                 + pi_other         * w_other         ///
+>                 + pi_communication * w_communication ///
+>                 + pi_recreation    * w_recreation)   ///
+>                 / w_nontrad
+(47 missing values generated)
+
+. 
+. label var pi_nontrad "Non-Tradable Inflation"
+
+. 
+. gen Z_bartik = w_trad * bh_oil_price_exp_shock
+(640 missing values generated)
+
+. label var Z_bartik "Bartik IV: w_trad x BH oil shock"
+
+. 
+. *============================================================================
+> ===
+. * LP parameters
+. *============================================================================
+> ===
+. global hmax = 13
+
+. global lags  = 12
+
+. 
+. *============================================================================
+> ===
+. * Forward LHS: Non-Tradable Inflation
+. *============================================================================
+> ===
+. forv h = 0/$hmax {
+  2.     gen pi_nt_h`h' = F`h'.pi_nontrad
+  3.     label var pi_nt_h`h' "Non-Tradable Inflation, h=`h'"
+  4. }
+(47 missing values generated)
+(65 missing values generated)
+(83 missing values generated)
+(101 missing values generated)
+(119 missing values generated)
+(137 missing values generated)
+(155 missing values generated)
+(173 missing values generated)
+(191 missing values generated)
+(209 missing values generated)
+(227 missing values generated)
+(245 missing values generated)
+(263 missing values generated)
+(282 missing values generated)
+
+. 
+. *============================================================================
+> ===
+. * IRF storage: point estimates, 90/68% CI, KP F-stat, SE
+. *============================================================================
+> ===
+. cap drop Months Zero
+
+. foreach stub in core peri soe {
+  2.     cap drop b_`stub' u90_`stub' d90_`stub' u68_`stub' d68_`stub' ///
+>              Fstat_`stub' se_`stub'
+  3.     gen b_`stub'     = .
+  4.     gen u90_`stub'   = .
+  5.     gen d90_`stub'   = .
+  6.     gen u68_`stub'   = .
+  7.     gen d68_`stub'   = .
+  8.     gen Fstat_`stub' = .
+  9.     gen se_`stub'    = .   // stored for pairwise t-tests
+ 10. }
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+(6,720 missing values generated)
+
+. gen Months = _n - 1 if _n <= $hmax + 1
+(6,706 missing values generated)
+
+. gen Zero   = 0      if _n <= $hmax + 1
+(6,706 missing values generated)
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: Core (country_group_n == 1: DEU FRA NLD AUT FIN BEL)
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: Periphery (country_group_n == 2: ITA ESP PRT GRC)
+. * NOTE: N=4 countries. If KP F < 10, results are flagged as potentially
+. * unreliable due to limited cross-sectional variation in the first stage.
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: Small open economies (country_group_n == 3)
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * Diagnostics: F-statistics and point estimates
+. *============================================================================
+> ===
+. di ""
+
+
+. di "KP F-statistics by group:"
+KP F-statistics by group:
+
+. list Months Fstat_core Fstat_peri Fstat_soe if Months != .
+
+      +-----------------------------------------+
+      | Months   Fstat~re   Fstat_~i   Fstat~oe |
+      |-----------------------------------------|
+   1. |      0   83.04455   36.53648   112.8367 |
+   2. |      1   83.04455   36.53648   112.8367 |
+   3. |      2   83.04455   36.53648   112.8367 |
+   4. |      3   83.04455   36.53648   112.8367 |
+   5. |      4   83.04455   36.53648   112.8367 |
+      |-----------------------------------------|
+   6. |      5   83.04455   36.53648   112.8367 |
+   7. |      6   83.04455   36.53648   112.8367 |
+   8. |      7   83.04455   36.53648   112.8367 |
+   9. |      8   83.04455   36.53648   112.8367 |
+  10. |      9   83.04455   36.53648   112.8367 |
+      |-----------------------------------------|
+  11. |     10   83.04455   36.53648   112.8367 |
+  12. |     11   83.04455   36.53648   112.8367 |
+  13. |     12   83.04455   36.53648   112.8367 |
+  14. |     13   83.04455   36.53648   112.8367 |
+      +-----------------------------------------+
+
+. 
+. di ""
+
+
+. di "Point estimates — Core vs Periphery vs SOE:"
+Point estimates — Core vs Periphery vs SOE:
+
+. list Months b_core b_peri b_soe if Months != .
+
+      +-----------------------------------------+
+      | Months     b_core     b_peri      b_soe |
+      |-----------------------------------------|
+   1. |      0   .2684033   .4341367   .1237712 |
+   2. |      1   .3828873   .5848347   .3233892 |
+   3. |      2   .3450331   .5948521    .547505 |
+   4. |      3   .5555869   .9986435   .6995459 |
+   5. |      4    .660277    1.23294   .8098105 |
+      |-----------------------------------------|
+   6. |      5   .7653331   1.529175   .9882878 |
+   7. |      6   1.042174   1.678357     .99766 |
+   8. |      7   1.065124   1.462718   .8736242 |
+   9. |      8   .9968755   1.335411   .7448378 |
+  10. |      9   .9751613   1.164293   .9311004 |
+      |-----------------------------------------|
+  11. |     10   .9587723   1.189854   1.083719 |
+  12. |     11   .8902343   1.109073   .9707442 |
+  13. |     12   .8234098   .9630001   .7596201 |
+  14. |     13   .8180947   .8347538   .4419469 |
+      +-----------------------------------------+
+
+. 
+. *============================================================================
+> ===
+. * Pairwise t-statistics (independent samples: t = Δb / sqrt(se1² + se2²))
+. * Evaluated at selected horizons h = 0, 3, 6, 9, 12
+. *============================================================================
+> ===
+. di ""
+
+
+. di "Pairwise group-difference t-statistics (two-sided, N(0,1) critical 1.96):
+> "
+Pairwise group-difference t-statistics (two-sided, N(0,1) critical 1.96):
+
+. di ""
+
+
+. di "  h     Core-Peri   Core-SOE   Peri-SOE"
+  h     Core-Peri   Core-SOE   Peri-SOE
+
+. foreach h in 0 3 6 9 12 {
+  2.     local n = `h' + 1
+  3. 
+.     qui su b_core  if _n == `n'
+  4.     local bc = r(mean)
+  5.     qui su b_peri  if _n == `n'
+  6.     local bp = r(mean)
+  7.     qui su b_soe   if _n == `n'
+  8.     local bs = r(mean)
+  9.     qui su se_core if _n == `n'
+ 10.     local sc = r(mean)
+ 11.     qui su se_peri if _n == `n'
+ 12.     local sp = r(mean)
+ 13.     qui su se_soe  if _n == `n'
+ 14.     local ss = r(mean)
+ 15. 
+.     local t_cp = (`bc' - `bp') / sqrt(`sc'^2 + `sp'^2)
+ 16.     local t_cs = (`bc' - `bs') / sqrt(`sc'^2 + `ss'^2)
+ 17.     local t_ps = (`bp' - `bs') / sqrt(`sp'^2 + `ss'^2)
+ 18. 
+.     di "  `h'     " %6.2f `t_cp' "     " %6.2f `t_cs' "     " %6.2f `t_ps'
+ 19. }
+  0      -1.05       1.13       1.96
+  3      -1.43      -0.58       0.96
+  6      -1.30       0.12       1.43
+  9      -0.35       0.11       0.44
+  12      -0.23       0.13       0.34
+
+. 
+. *============================================================================
+> ===
+. * Save IRF data for table
+. *============================================================================
+> ===
+. preserve
+
+. keep if Months != .
+(6,706 observations deleted)
+
+. keep Months ///
+>      b_core u90_core d90_core u68_core d68_core Fstat_core se_core ///
+>      b_peri u90_peri d90_peri u68_peri d68_peri Fstat_peri se_peri ///
+>      b_soe  u90_soe  d90_soe  u68_soe  d68_soe  Fstat_soe  se_soe
+
+. export delimited "../output/tables/irf_heterogeneity.csv", replace
+(file ../output/tables/irf_heterogeneity.csv not found)
+file ../output/tables/irf_heterogeneity.csv saved
+
+. restore
+
+. 
+. di ""
+
+
+. di "IRF data saved: output/tables/irf_heterogeneity.csv"
+IRF data saved: output/tables/irf_heterogeneity.csv
+
+. 
+. *============================================================================
+> ===
+. * Overlay Figure: Three groups on the same axes
+. *============================================================================
+> ===
+. twoway ///
+>     (rarea u90_core d90_core Months,                                   ///
+>         fcolor(navy%15) lcolor(navy%15) lw(none))                      ///
+>     (rarea u68_core d68_core Months,                                   ///
+>         fcolor(navy%30) lcolor(navy%30) lw(none))                      ///
+>     (rarea u90_peri d90_peri Months,                                   ///
+>         fcolor(cranberry%12) lcolor(cranberry%12) lw(none))            ///
+>     (rarea u68_peri d68_peri Months,                                   ///
+>         fcolor(cranberry%25) lcolor(cranberry%25) lw(none))            ///
+>     (rarea u90_soe d90_soe Months,                                     ///
+>         fcolor(forest_green%12) lcolor(forest_green%12) lw(none))      ///
+>     (rarea u68_soe d68_soe Months,                                     ///
+>         fcolor(forest_green%25) lcolor(forest_green%25) lw(none))      ///
+>     (line b_core Months,                                               ///
+>         lcolor(navy) lpattern(solid) lwidth(thick))                    ///
+>     (line b_peri Months,                                               ///
+>         lcolor(cranberry) lpattern(dash) lwidth(thick))                ///
+>     (line b_soe  Months,                                               ///
+>         lcolor(forest_green) lpattern(longdash) lwidth(thick))         ///
+>     (line Zero Months,                                                  ///
+>         lcolor(black) lpattern(dash) lwidth(thin)),                    ///
+>     legend(order(                                                       ///
+>         7 "Core (N=6)"                                                 ///
+>         8 "Periphery (N=4)"                                            ///
+>         9 "Small open (N=10)"                                          ///
+>         2 "68% CI"                                                     ///
+>         1 "90% CI")                                                    ///
+>         size(small) rows(5) pos(5) ring(0))                            ///
+>     title("Second-Round Pass-Through: Heterogeneity Across EMU Groups", ///
+>           color(black) size(medsmall))                                 ///
+>     ytitle("{&theta}{subscript:h}", size(medsmall))                    ///
+>     xtitle("Months after shock", size(medsmall))                       ///
+>     xlabel(0(2)12) xscale(range(0 12))                                 ///
+>     ylabel(, labsize(small) format(%5.2f))                             ///
+>     note("EMU20. Core: DEU FRA NLD AUT FIN BEL. Periphery: ITA ESP PRT GRC." 
+> ///
+>          "Small open: IRL LUX EST LVA LTU SVK SVN MLT CYP HRV."       ///
+>          "Bartik IV: w{subscript:trad} {&times} BH oil shock. 12 lags. Countr
+> y FE. vce(robust)." ///
+>          "90% and 68% CI shown.", size(vsmall))                        ///
+>     graphregion(color(white))
+
+. 
+. gr rename g_lp_heterogeneity, replace
+(note: graph g_lp_heterogeneity not found)
+
+. graph export "../output/figures/g_lp_heterogeneity.pdf", replace
+file ../output/figures/g_lp_heterogeneity.pdf saved as PDF format
+
+. 
+. di ""
+
+
+. di "Figure saved: output/figures/g_lp_heterogeneity.pdf"
+Figure saved: output/figures/g_lp_heterogeneity.pdf
+
+. 
+end of do-file

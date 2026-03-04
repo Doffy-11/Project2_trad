@@ -1,0 +1,511 @@
+
+  ___  ____  ____  ____  ____ ©
+ /__    /   ____/   /   ____/      17.0
+___/   /   /___/   /   /___/       SE—Standard Edition
+
+ Statistics and Data Science       Copyright 1985-2021 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-STATA-PC        https://www.stata.com
+                                   979-696-4600        stata@stata.com
+
+Stata license: 100-student lab perpetual
+Serial number: 401706316154
+  Licensed to: Zo Andriantomanga
+               University of Wisconsin-Milwaukee
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. Maximum number of variables is set to 5,000; see help set_maxvar.
+
+. do code/7.1_LP_rob_instruments.do 
+
+. 
+. * Phase 4 — Instrument Robustness
+. * Compares the baseline Baumeister-Hamilton instrument against two alternativ
+> es:
+. *   (1) GSCPI shocks: AR(2) innovations on the NY Fed Global Supply Chain Pre
+> ssure Index
+. *   (2) IMF non-fuel commodity shocks: AR(1) innovations on log-differences o
+> f the
+. *       IMF non-fuel primary commodity price index (PALLFNFINDEXM via FRED)
+. * In all cases the instrument enters in Bartik-style: Z = w_trad * shock
+. * Sample: EMU20 only (emu==1). Controls, FE, and lag structure identical to b
+> aseline.
+. * BDI: skipped (FRED series unavailable; documented in Phase 2 report).
+. 
+. cap cd code
+
+. 
+. clear all
+
+. cap drop _all
+
+. cap graph drop _all
+
+. 
+. *============================================================================
+> ===
+. * Graph Settings
+. *============================================================================
+> ===
+. grstyle clear
+
+. set scheme s2color
+
+. grstyle init
+
+. grstyle set plain, horizontal grid
+
+. grstyle set symbol
+
+. grstyle set legend 10, inside nobox
+
+. 
+. *============================================================================
+> ===
+. * Load full panel
+. *============================================================================
+> ===
+. use "../data/clean/panel.dta"
+
+. 
+. egen id = group(code)
+
+. sort code year month
+
+. gen time = ym(year, month)
+
+. format time %tm
+
+. xtset id time
+
+Panel variable: id (strongly balanced)
+ Time variable: time, 1998m1 to 2025m12
+         Delta: 1 month
+
+. 
+. *============================================================================
+> ===
+. * Tradable & Non-Tradable Inflation (identical to baseline)
+. *============================================================================
+> ===
+. 
+. gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
+
+. 
+. gen pi_trad = (pi_food        * w_food        ///
+>              + pi_clothing    * w_clothing     ///
+>              + pi_furnishing  * w_furnishing   ///
+>              + pi_transport   * w_transport    ///
+>              + pi_alcohol     * w_alcohol)     ///
+>              / w_trad
+(12 missing values generated)
+
+. 
+. label var pi_trad "Tradable Inflation"
+
+. 
+. gen w_nontrad = w_housing + w_health + w_education ///
+>               + w_restaurants + w_other             ///
+>               + w_communication + w_recreation
+
+. 
+. gen pi_nontrad = (pi_housing       * w_housing       ///
+>                 + pi_health        * w_health        ///
+>                 + pi_education     * w_education     ///
+>                 + pi_restaurants   * w_restaurants   ///
+>                 + pi_other         * w_other         ///
+>                 + pi_communication * w_communication ///
+>                 + pi_recreation    * w_recreation)   ///
+>                 / w_nontrad
+(47 missing values generated)
+
+. 
+. label var pi_nontrad "Non-Tradable Inflation"
+
+. 
+. *============================================================================
+> ===
+. * Baseline Bartik instrument (BH oil price expectation shock)
+. *============================================================================
+> ===
+. gen Z_bh = w_trad * bh_oil_price_exp_shock
+(864 missing values generated)
+
+. label var Z_bh "Bartik IV: w_trad x BH oil price shock"
+
+. 
+. *============================================================================
+> ===
+. * Merge GSCPI shocks (AR(2) innovations)
+. *============================================================================
+> ===
+. preserve
+
+. import delimited "../data/clean/gscpi_shocks.csv", clear varnames(1)
+(encoding automatically selected: ISO-8859-1)
+(3 vars, 336 obs)
+
+. tempfile gscpi_tmp
+
+. save `gscpi_tmp'
+file /var/folders/7q/zwm3gpld2llgwyynl4bctfv80000gn/T//St28176.000002 saved
+    as .dta format
+
+. restore
+
+. merge m:1 year month using `gscpi_tmp', keep(match master) nogen
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                             9,072  
+    -----------------------------------------
+
+. 
+. gen Z_gscpi = w_trad * gscpi_shock
+(54 missing values generated)
+
+. label var Z_gscpi "Bartik IV: w_trad x GSCPI AR(2) shock"
+
+. 
+. * Also create a direct (non-Bartik) GSCPI instrument as diagnostic
+. * The direct version uses GSCPI shock uniformly (no tradable-exposure weighti
+> ng)
+. gen Z_gscpi_direct = gscpi_shock
+(54 missing values generated)
+
+. label var Z_gscpi_direct "Direct IV: GSCPI AR(2) shock (no Bartik weight)"
+
+. 
+. *============================================================================
+> ===
+. * Merge IMF non-fuel commodity shocks (AR(1) innovations on dln_imf)
+. *============================================================================
+> ===
+. preserve
+
+. import delimited "../data/clean/imf_shocks.csv", clear varnames(1)
+(encoding automatically selected: ISO-8859-1)
+(3 vars, 337 obs)
+
+. tempfile imf_tmp
+
+. save `imf_tmp'
+file /var/folders/7q/zwm3gpld2llgwyynl4bctfv80000gn/T//St28176.000004 saved
+    as .dta format
+
+. restore
+
+. merge m:1 year month using `imf_tmp', keep(match master) nogen
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                             9,072  
+    -----------------------------------------
+
+. 
+. gen Z_imf = w_trad * imf_shock
+(54 missing values generated)
+
+. label var Z_imf "Bartik IV: w_trad x IMF non-fuel AR(1) shock"
+
+. 
+. *============================================================================
+> ===
+. * Re-sort and re-declare panel after merges
+. *============================================================================
+> ===
+. sort id time
+
+. xtset id time
+
+Panel variable: id (strongly balanced)
+ Time variable: time, 1998m1 to 2025m12
+         Delta: 1 month
+
+. 
+. *============================================================================
+> ===
+. * LP parameters
+. *============================================================================
+> ===
+. global hmax = 13
+
+. global lags  = 12
+
+. 
+. *============================================================================
+> ===
+. * Forward LHS: Non-Tradable Inflation
+. *============================================================================
+> ===
+. forv h = 0/$hmax {
+  2.     gen pi_nt_h`h' = F`h'.pi_nontrad
+  3.     label var pi_nt_h`h' "Non-Tradable Inflation, h=`h'"
+  4. }
+(47 missing values generated)
+(72 missing values generated)
+(97 missing values generated)
+(122 missing values generated)
+(147 missing values generated)
+(172 missing values generated)
+(197 missing values generated)
+(222 missing values generated)
+(247 missing values generated)
+(272 missing values generated)
+(297 missing values generated)
+(322 missing values generated)
+(347 missing values generated)
+(373 missing values generated)
+
+. 
+. *============================================================================
+> ===
+. * IRF storage matrices
+. *============================================================================
+> ===
+. cap drop Months Zero
+
+. foreach stub in bh gscpi gscpi_d imf {
+  2.     cap drop b_`stub' u90_`stub' d90_`stub' u68_`stub' d68_`stub' Fstat_`s
+> tub'
+  3.     gen b_`stub'     = .
+  4.     gen u90_`stub'   = .
+  5.     gen d90_`stub'   = .
+  6.     gen u68_`stub'   = .
+  7.     gen d68_`stub'   = .
+  8.     gen Fstat_`stub' = .
+  9. }
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+(9,072 missing values generated)
+
+. gen Months = _n - 1 if _n <= $hmax + 1
+(9,058 missing values generated)
+
+. gen Zero   = 0      if _n <= $hmax + 1
+(9,058 missing values generated)
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: Baseline (BH oil shock)
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: GSCPI shocks
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: GSCPI direct (no Bartik weight) — diagnostic for weak instrument
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * LP-IV: IMF non-fuel commodity shocks
+. *============================================================================
+> ===
+. qui forv h = 0/$hmax {
+
+. 
+. *============================================================================
+> ===
+. * Diagnostics
+. *============================================================================
+> ===
+. di ""
+
+
+. di "KP F-statistics:"
+KP F-statistics:
+
+. di ""
+
+
+. list Months Fstat_bh Fstat_gscpi Fstat_gscpi_d Fstat_imf if Months != .
+
+      +----------------------------------------------------+
+      | Months   Fstat_bh   Fstat_~i   Fstat_~d   Fstat_~f |
+      |----------------------------------------------------|
+   1. |      0   208.5761   2.370225   1.941662   176.0579 |
+   2. |      1   208.5761   2.872478   2.408735   176.4773 |
+   3. |      2   208.5761   2.864369   2.401624   176.5699 |
+   4. |      3   208.5761    2.77061   2.312605   176.0106 |
+   5. |      4   208.5761   2.852941   2.389179   176.1321 |
+      |----------------------------------------------------|
+   6. |      5   208.5761   2.815014   2.353996   175.3025 |
+   7. |      6   208.5761   2.850237   2.387937   175.7722 |
+   8. |      7   208.5761   2.915026   2.446794   175.5069 |
+   9. |      8   208.5761    3.21948   2.750814   175.0788 |
+  10. |      9   208.5761   3.222268   2.753551   175.1244 |
+      |----------------------------------------------------|
+  11. |     10   208.5761   3.025459   2.561999   173.7231 |
+  12. |     11   208.5761   3.058694    2.59396    173.137 |
+  13. |     12   208.5761   3.090581   2.622129   172.5018 |
+  14. |     13   208.5761   3.153129   2.682096   172.8186 |
+      +----------------------------------------------------+
+
+. 
+. di ""
+
+
+. di "Point estimates — b_bh vs b_gscpi (Bartik) vs b_gscpi_d (direct) vs b_imf
+> :"
+Point estimates — b_bh vs b_gscpi (Bartik) vs b_gscpi_d (direct) vs b_imf:
+
+. list Months b_bh b_gscpi b_gscpi_d b_imf if Months != .
+
+      +------------------------------------------------------+
+      | Months       b_bh     b_gscpi   b_gscpi_d      b_imf |
+      |------------------------------------------------------|
+   1. |      0    .183744   -.0711274   -.0047694   .2934556 |
+   2. |      1   .3181779    .1091896    .1120493   .6451387 |
+   3. |      2   .4142943    .0213929     -.07014    .873554 |
+   4. |      3   .5997885     1.29645    1.345084   1.135586 |
+   5. |      4   .7087654     2.63296    2.729803   1.382818 |
+      |------------------------------------------------------|
+   6. |      5   .8806795    4.086485    4.271883   1.667995 |
+   7. |      6    .963898    5.513595    5.850083   1.981946 |
+   8. |      7   .8467717    5.964809     6.22348   2.154533 |
+   9. |      8   .7295987    7.539115    7.839591   2.357376 |
+  10. |      9   .8153446    8.923035    9.398451   2.454503 |
+      |------------------------------------------------------|
+  11. |     10   .8905494    11.12295     11.9128    2.61261 |
+  12. |     11   .7761794    12.21285    13.11454   2.845353 |
+  13. |     12   .6181477    12.74667    13.59359   2.783358 |
+  14. |     13    .423097     13.7284    14.59932   2.613952 |
+      +------------------------------------------------------+
+
+. 
+. *============================================================================
+> ===
+. * Save IRF data for table
+. *============================================================================
+> ===
+. preserve
+
+. keep if Months != .
+(9,058 observations deleted)
+
+. keep Months b_bh u90_bh d90_bh u68_bh d68_bh Fstat_bh ///
+>             b_gscpi u90_gscpi d90_gscpi u68_gscpi d68_gscpi Fstat_gscpi ///
+>             b_gscpi_d u90_gscpi_d d90_gscpi_d u68_gscpi_d d68_gscpi_d Fstat_g
+> scpi_d ///
+>             b_imf u90_imf d90_imf u68_imf d68_imf Fstat_imf
+
+. export delimited "../output/tables/irf_rob_instruments.csv", replace
+file ../output/tables/irf_rob_instruments.csv saved
+
+. restore
+
+. 
+. di ""
+
+
+. di "IRF data saved: output/tables/irf_rob_instruments.csv"
+IRF data saved: output/tables/irf_rob_instruments.csv
+
+. 
+. *============================================================================
+> ===
+. * Overlay Figure: Three instruments comparison
+. *============================================================================
+> ===
+. twoway ///
+>     (rarea u90_bh d90_bh Months,                                  ///
+>         fcolor(blue%15) lcolor(blue%15) lw(none))                 ///
+>     (rarea u68_bh d68_bh Months,                                  ///
+>         fcolor(blue%30) lcolor(blue%30) lw(none))                 ///
+>     (rarea u90_gscpi d90_gscpi Months,                            ///
+>         fcolor(red%12) lcolor(red%12) lw(none))                   ///
+>     (rarea u68_gscpi d68_gscpi Months,                            ///
+>         fcolor(red%25) lcolor(red%25) lw(none))                   ///
+>     (rarea u90_imf d90_imf Months,                                ///
+>         fcolor(green%12) lcolor(green%12) lw(none))               ///
+>     (rarea u68_imf d68_imf Months,                                ///
+>         fcolor(green%25) lcolor(green%25) lw(none))               ///
+>     (line b_bh Months,                                            ///
+>         lcolor(blue) lpattern(solid) lwidth(thick))               ///
+>     (line b_gscpi Months,                                         ///
+>         lcolor(red) lpattern(dash) lwidth(thick))                 ///
+>     (line b_imf Months,                                           ///
+>         lcolor(green) lpattern(longdash) lwidth(thick))           ///
+>     (line Zero Months,                                            ///
+>         lcolor(black) lpattern(dash) lwidth(thin)),               ///
+>     legend(order(                                                  ///
+>         7 "BH oil shock (baseline)"                               ///
+>         8 "GSCPI AR(2) shocks"                                    ///
+>         9 "IMF non-fuel AR(1) shocks"                             ///
+>         2 "68% CI"                                                ///
+>         1 "90% CI")                                               ///
+>         size(small) rows(5) pos(5) ring(0))                       ///
+>     title("Instrument Robustness: Alternative IV Specifications", ///
+>           color(black) size(medsmall))                            ///
+>     ytitle("{&theta}{subscript:h}", size(medsmall))               ///
+>     xtitle("Months after shock", size(medsmall))                  ///
+>     xlabel(0(2)12) xscale(range(0 12))                            ///
+>     ylabel(, labsize(small) format(%5.2f))                        ///
+>     note("EMU20 sample. Bartik IV: w{subscript:trad} {&times} instrument shoc
+> k."  ///
+>          "Baseline: BH oil price expectation shock. GSCPI: AR(2) residuals (N
+> Y Fed)." ///
+>          "IMF: AR(1) residuals on dln(non-fuel commodity index, PALLFNFINDEXM
+>  via FRED)." ///
+>          "90% and 68% CI shown. 12 lags. Country FE. vce(robust).",          
+>    ///
+>          size(vsmall))                                            ///
+>     graphregion(color(white))
+
+. 
+. gr rename g_lp_rob_instruments, replace
+(note: graph g_lp_rob_instruments not found)
+
+. graph export "../output/figures/g_lp_rob_instruments.pdf", replace
+file ../output/figures/g_lp_rob_instruments.pdf saved as PDF format
+
+. 
+. di ""
+
+
+. di "Figure saved: output/figures/g_lp_rob_instruments.pdf"
+Figure saved: output/figures/g_lp_rob_instruments.pdf
+
+. 
+end of do-file
