@@ -68,7 +68,7 @@ label var pi_nontrad "Non-Tradable Inflation (Housing, Health, Education, Restau
 * Spec 2 (robust):   Z_bartik_wi  = wi_imp_gdp/100 x bh_oil_price_exp_shock
 * Spec 3 (robust):   Z_direct     = bh_oil_price_exp_shock (no scaling)
 *
-* All specs: Country FE, 12 lags, bh_oil_supply_shock as control, pre-2020
+* All specs: Country FE, 12 lags, full sample
 *===============================================================================
 
 global hmax = 13
@@ -82,9 +82,6 @@ gen Z_direct    = bh_oil_price_exp_shock
 label var Z_bartik_wt "Bartik IV: Tradables Weight x Market Oil Price Shock"
 label var Z_bartik_wi "Bartik IV: Import/GDP Weight x Market Oil Price Shock"
 label var Z_direct    "Direct IV: Market Oil Price Shock (no scaling)"
-
-* ── Sample restriction ────────────────────────────────────────────────────────
-keep if year < 2020
 
 * ── Forward LHS Variables ─────────────────────────────────────────────────────
 forv h = 0/$hmax {
@@ -187,7 +184,7 @@ twoway ///
     xtitle("Months after shock", size(medsmall))                ///
     xlabel(0(2)12) xscale(range(0 12))                          ///
     ylabel(, labsize(small) format(%5.2f))                      ///
-    note("90% CI shown for baseline only. Pre-2020 sample. 12 lags. Country FE.", ///
+    note("90% CI shown for baseline only. Full sample. 12 lags. Country FE.", ///
          size(vsmall))                                          ///
     graphregion(color(white))
 

@@ -11,6 +11,7 @@ rm(list=ls())
 
 suppressPackageStartupMessages({
   library(eurostat)
+  library(openxlsx)
   library(dplyr)
   library(tidyr)
   library(tibble)
