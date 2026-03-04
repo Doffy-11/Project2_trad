@@ -1,0 +1,185 @@
+
+* Phase 3 — Step 4: EMU20 vs EU7 IRF Overlay
+* Run from the code/ directory:
+*   cd code && do 6.4_LP_EMU20_vs_EU7.do
+*
+* Runs the baseline LP-IV on EMU20 and EU7 in a single pass and
+* overlays both IRFs on the same axes. The comparison is the
+* cleanest test of the EMU identification: if second-round
+* pass-through is driven by the monetary union constraint, the
+* EMU20 IRF should dominate the EU7 IRF, particularly at the
+* short-to-medium horizon where the common monetary policy
+* prevents offsetting the initial tradable price shock.
+
+cap cd code
+
+clear all
+cap drop _all
+cap graph drop _all
+
+*===============================================================================
+* Graph Settings
+*===============================================================================
+grstyle clear
+set scheme s2color
+grstyle init
+grstyle set plain, horizontal grid
+grstyle set symbol
+grstyle set legend 10, inside nobox
+
+*===============================================================================
+* Load full panel
+*===============================================================================
+use "../data/clean/panel.dta"
+
+egen id = group(code)
+sort code year month
+gen time = ym(year, month)
+format time %tm
+xtset id time
+
+*===============================================================================
+* Tradable & Non-Tradable Inflation
+*===============================================================================
+
+gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
+
+gen pi_trad = (pi_food        * w_food        ///
+             + pi_clothing    * w_clothing     ///
+             + pi_furnishing  * w_furnishing   ///
+             + pi_transport   * w_transport    ///
+             + pi_alcohol     * w_alcohol)     ///
+             / w_trad
+
+label var pi_trad "Tradable Inflation"
+
+gen w_nontrad = w_housing + w_health + w_education ///
+              + w_restaurants + w_other             ///
+              + w_communication + w_recreation
+
+gen pi_nontrad = (pi_housing       * w_housing       ///
+                + pi_health        * w_health        ///
+                + pi_education     * w_education     ///
+                + pi_restaurants   * w_restaurants   ///
+                + pi_other         * w_other         ///
+                + pi_communication * w_communication ///
+                + pi_recreation    * w_recreation)   ///
+                / w_nontrad
+
+label var pi_nontrad "Non-Tradable Inflation"
+
+gen Z_bartik = w_trad * bh_oil_price_exp_shock
+label var Z_bartik "Bartik IV: Tradables Weight x BH Oil Price Shock"
+
+global hmax = 13
+global lags  = 12
+
+* ── Forward LHS Variables ─────────────────────────────────────────────────────
+forv h = 0/$hmax {
+    gen pi_nt_h`h' = F`h'.pi_nontrad
+    label var pi_nt_h`h' "Non-Tradable Inflation, horizon h=`h'"
+}
+
+* ── IRF Storage ───────────────────────────────────────────────────────────────
+cap drop Months Zero
+foreach stub in emu eu7 {
+    cap drop b_`stub' u90_`stub' d90_`stub' u68_`stub' d68_`stub' Fstat_`stub'
+    gen b_`stub'     = .
+    gen u90_`stub'   = .
+    gen d90_`stub'   = .
+    gen u68_`stub'   = .
+    gen d68_`stub'   = .
+    gen Fstat_`stub' = .
+}
+gen Months = _n - 1 if _n <= $hmax + 1
+gen Zero   = 0      if _n <= $hmax + 1
+
+* ── LP-IV: EMU20 ──────────────────────────────────────────────────────────────
+qui forv h = 0/$hmax {
+
+    ivreghdfe pi_nt_h`h'                        ///
+        (pi_trad = Z_bartik)                     ///
+        l(1/$lags).pi_nontrad                    ///
+        l(1/$lags).pi_trad                       ///
+        l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
+        if emu == 1                              ///
+        , absorb(id) vce(robust)
+
+    replace b_emu     = _b[pi_trad]                         if _n == `h' + 1
+    replace u90_emu   = _b[pi_trad] + 1.645*_se[pi_trad]   if _n == `h' + 1
+    replace d90_emu   = _b[pi_trad] - 1.645*_se[pi_trad]   if _n == `h' + 1
+    replace u68_emu   = _b[pi_trad] + 1.000*_se[pi_trad]   if _n == `h' + 1
+    replace d68_emu   = _b[pi_trad] - 1.000*_se[pi_trad]   if _n == `h' + 1
+    replace Fstat_emu = e(widstat)                          if _n == `h' + 1
+}
+
+* ── LP-IV: EU7 ────────────────────────────────────────────────────────────────
+qui forv h = 0/$hmax {
+
+    ivreghdfe pi_nt_h`h'                        ///
+        (pi_trad = Z_bartik)                     ///
+        l(1/$lags).pi_nontrad                    ///
+        l(1/$lags).pi_trad                       ///
+        l(1/$lags).ur                            ///
+        l(1/$lags).dln_neer                      ///
+        if emu == 0                              ///
+        , absorb(id) vce(robust)
+
+    replace b_eu7     = _b[pi_trad]                         if _n == `h' + 1
+    replace u90_eu7   = _b[pi_trad] + 1.645*_se[pi_trad]   if _n == `h' + 1
+    replace d90_eu7   = _b[pi_trad] - 1.645*_se[pi_trad]   if _n == `h' + 1
+    replace u68_eu7   = _b[pi_trad] + 1.000*_se[pi_trad]   if _n == `h' + 1
+    replace d68_eu7   = _b[pi_trad] - 1.000*_se[pi_trad]   if _n == `h' + 1
+    replace Fstat_eu7 = e(widstat)                          if _n == `h' + 1
+}
+
+* ── Diagnostics ───────────────────────────────────────────────────────────────
+di ""
+di "KP F — EMU20:"
+list Months Fstat_emu if Months != .
+di ""
+di "KP F — EU7:"
+list Months Fstat_eu7 if Months != .
+di ""
+di "Point estimates:"
+list Months b_emu b_eu7 if Months != .
+
+* ── Overlay Plot ──────────────────────────────────────────────────────────────
+twoway ///
+    (rarea u90_emu d90_emu Months,                               ///
+        fcolor(blue%15) lcolor(blue%15) lw(none))                ///
+    (rarea u68_emu d68_emu Months,                               ///
+        fcolor(blue%30) lcolor(blue%30) lw(none))                ///
+    (rarea u90_eu7 d90_eu7 Months,                               ///
+        fcolor(red%12) lcolor(red%12) lw(none))                  ///
+    (rarea u68_eu7 d68_eu7 Months,                               ///
+        fcolor(red%25) lcolor(red%25) lw(none))                  ///
+    (line b_emu Months,                                          ///
+        lcolor(blue) lpattern(solid) lwidth(thick))              ///
+    (line b_eu7 Months,                                          ///
+        lcolor(red) lpattern(dash) lwidth(thick))                ///
+    (line Zero Months,                                           ///
+        lcolor(black) lpattern(dash) lwidth(thin)),              ///
+    legend(order(                                                ///
+        5 "EMU20"                                                ///
+        6 "EU7 (Non-EMU)"                                        ///
+        2 "68% CI"                                               ///
+        1 "90% CI")                                              ///
+        size(small) rows(4) pos(5) ring(0))                      ///
+    title("Second-Round Pass-Through: EMU20 vs Non-EMU EU",      ///
+          color(black) size(medsmall))                           ///
+    ytitle("{&theta}{subscript:h}", size(medsmall))              ///
+    xtitle("Months after shock", size(medsmall))                 ///
+    xlabel(0(2)12) xscale(range(0 12))                           ///
+    ylabel(, labsize(small) format(%5.2f))                       ///
+    note("90% and 68% CI shown for both samples. Bartik IV: w{subscript:trad} {&times} BH oil shock." ///
+         "12 lags. Country FE. vce(robust). EU7 NEER: bilateral EUR rate (ECB).", ///
+         size(vsmall))                                           ///
+    graphregion(color(white))
+
+gr rename g_lp_emu20_vs_eu7, replace
+graph export "../output/figures/g_lp_emu20_vs_eu7.pdf", replace
+
+di ""
+di "Figure saved: output/figures/g_lp_emu20_vs_eu7.pdf"
