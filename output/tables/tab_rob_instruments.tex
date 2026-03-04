@@ -39,7 +39,16 @@ Controls: 12 lags of non-tradable inflation, tradable inflation,
 unemployment rate, and log NEER change. Country FE. vce(robust).
 90\% confidence intervals in brackets.
 GSCPI instrument (AR(2) innovations on the NY Fed Global Supply Chain
-Pressure Index, both Bartik-weighted and direct) excluded: KP $F < 4$
-in all specifications (weak instrument). BDI: unavailable.
+Pressure Index) excluded: KP $F \approx 2$ in both the Bartik-weighted
+($Z_{it} = w^{\text{trad}}_{it} \times \varepsilon^{\text{GSCPI}}_t$) and
+direct ($Z_t = \varepsilon^{\text{GSCPI}}_t$) variants, far below the
+Stock-Yogo 10\% maximal size critical value of 16.38.
+With a first stage this weak, IV estimates are biased toward OLS and
+standard errors are severely inflated; point estimates diverge explosively
+at longer horizons (reaching $\hat{\theta}_{13} \approx 14$).
+The failure is economically interpretable: GSCPI shocks transmit
+uniformly across all CPI components and generate no meaningful
+cross-sectional variation in tradable inflation exposure.
+BDI: unavailable (FRED series discontinued).
 \end{tablenotes}
 \end{table}

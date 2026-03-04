@@ -162,6 +162,20 @@ qui forv h = 0/$hmax {
 
 *===============================================================================
 * LP-IV: GSCPI shocks
+* NOTE — WEAK INSTRUMENT: GSCPI is retained here for diagnostic completeness
+* only. KP F-statistic is approximately 2 across all horizons in both the
+* Bartik-weighted and direct variants, far below the conventional threshold of
+* 10 (and the Stock-Yogo 10%-size critical value of 16.38 for a single
+* endogenous regressor). With such a weak first stage, IV estimates are
+* severely biased toward OLS and standard errors are inflated, causing the
+* point estimates to diverge explosively at longer horizons (reaching ~14 at
+* h=13). The failure is economically interpretable: GSCPI measures supply-
+* chain pressures that transmit broadly across all CPI components, so the
+* Bartik wrapper w_trad × gscpi_shock does not create meaningful cross-country
+* variation in tradable inflation beyond what country FE and lags already
+* absorb. The direct version (Z_gscpi_direct = gscpi_shock) also fails (KP
+* F ≈ 2) because GSCPI variation is purely time-series with no cross-sectional
+* leverage. Conclusion: GSCPI is excluded from the robustness table.
 *===============================================================================
 qui forv h = 0/$hmax {
 
@@ -206,6 +220,16 @@ qui forv h = 0/$hmax {
 
 *===============================================================================
 * LP-IV: IMF non-fuel commodity shocks
+* NOTABLE DIVERGENCE: IMF non-fuel estimates are systematically larger than
+* the BH baseline across all horizons (e.g. 1.98 vs 0.96 at h=6; 2.45 vs
+* 0.82 at h=9) and do not exhibit the same reversion after h=6. The instrument
+* remains strong (KP F ≈ 176) so this is not a weak-IV artefact. The likely
+* explanation is that the IMF non-fuel commodity basket captures a broader set
+* of tradable price pressures — agricultural commodities, metals, raw
+* materials — beyond the oil channel that dominates BH. These broader
+* commodity shocks may transmit with longer lags into non-tradable inflation
+* through wage and input-cost channels that are less responsive to monetary
+* policy accommodation. Author to address this interpretation in the paper.
 *===============================================================================
 qui forv h = 0/$hmax {
 
