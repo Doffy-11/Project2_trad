@@ -11,8 +11,8 @@
 *   Sample:     EMU20 (emu == 1), full sample
 *   H:          0 to 13 | Lags: 12
 
-cap cd code
-do _setup.do
+*cap cd code
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup — EMU20 only
@@ -120,7 +120,7 @@ twoway ///
     graphregion(color(white))
 
 gr rename g_lp_emu20_replication, replace
-graph export "../output/figures/g_lp_emu20_replication.pdf", replace
+graph export "output/figures/g_lp_emu20_replication.pdf", replace
 
 di ""
 di "Figure saved: output/figures/g_lp_emu20_replication.pdf"

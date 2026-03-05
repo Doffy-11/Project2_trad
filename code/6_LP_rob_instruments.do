@@ -8,8 +8,7 @@
 * Sample: EMU20 only (if emu==1). Controls, FE, and lags identical to baseline.
 * GSCPI retained for diagnostic completeness only (KP F ≈ 2, weak instrument).
 
-cap cd code
-do _setup.do
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup — Full panel (filter in regression with if emu==1)
@@ -28,7 +27,7 @@ label var Z_bh "Bartik IV: w_trad x BH oil price shock"
 
 * Merge GSCPI shocks
 preserve
-import delimited "../data/clean/gscpi_shocks.csv", clear varnames(1)
+import delimited "data/clean/gscpi_shocks.csv", clear varnames(1)
 tempfile gscpi_tmp
 save `gscpi_tmp'
 restore
@@ -42,7 +41,7 @@ label var Z_gscpi_direct "Direct IV: GSCPI AR shock (no Bartik weight)"
 
 * Merge IMF non-fuel commodity shocks
 preserve
-import delimited "../data/clean/imf_shocks.csv", clear varnames(1)
+import delimited "data/clean/imf_shocks.csv", clear varnames(1)
 tempfile imf_tmp
 save `imf_tmp'
 restore
@@ -191,7 +190,7 @@ keep Months b_bh u90_bh d90_bh u68_bh d68_bh Fstat_bh ///
             b_gscpi u90_gscpi d90_gscpi u68_gscpi d68_gscpi Fstat_gscpi ///
             b_gscpi_d u90_gscpi_d d90_gscpi_d u68_gscpi_d d68_gscpi_d Fstat_gscpi_d ///
             b_imf u90_imf d90_imf u68_imf d68_imf Fstat_imf
-export delimited "../output/tables/irf_rob_instruments.csv", replace
+export delimited "output/tables/irf_rob_instruments.csv", replace
 restore
 
 di ""
@@ -242,7 +241,7 @@ twoway ///
     graphregion(color(white))
 
 gr rename g_lp_rob_instruments, replace
-graph export "../output/figures/g_lp_rob_instruments.pdf", replace
+graph export "output/figures/g_lp_rob_instruments.pdf", replace
 
 di ""
 di "Figure saved: output/figures/g_lp_rob_instruments.pdf"

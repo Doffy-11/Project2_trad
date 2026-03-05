@@ -16,8 +16,8 @@
 *   EMU20 countries — log change in Euro EER-40 (common, from ECB)
 *   EU7 countries   — log change in bilateral EUR spot rate (country-specific)
 
-cap cd code
-do _setup.do
+
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup — Full EU27
@@ -139,7 +139,7 @@ preserve
 keep if Months != .
 keep Months b_emu20 u90_emu20 d90_emu20 u68_emu20 d68_emu20 Fstat_emu20 ///
            b_eu27  u90_eu27  d90_eu27  u68_eu27  d68_eu27  Fstat_eu27
-export delimited using "../output/tables/irf_eu27_comparison.csv", replace
+export delimited using "output/tables/irf_eu27_comparison.csv", replace
 restore
 
 * EU7 placebo
@@ -148,7 +148,7 @@ keep if Months != .
 keep Months b_eu7 u90_eu7 d90_eu7 u68_eu7 d68_eu7 Fstat_eu7
 rename (b_eu7 u90_eu7 d90_eu7 u68_eu7 d68_eu7 Fstat_eu7) (b u90 d90 u68 d68 Fstat)
 gen sample = "EU7_placebo"
-export delimited using "../output/tables/irf_eu7_placebo.csv", replace
+export delimited using "output/tables/irf_eu7_placebo.csv", replace
 restore
 
 *===============================================================================
@@ -183,7 +183,7 @@ twoway ///
     graphregion(color(white))
 
 gr rename g_lp_eu27_comparison, replace
-graph export "../output/figures/g_lp_eu27_comparison.pdf", replace
+graph export "output/figures/g_lp_eu27_comparison.pdf", replace
 
 *===============================================================================
 * Figure 2: EU7 placebo
@@ -214,7 +214,7 @@ twoway ///
     graphregion(color(white))
 
 gr rename g_lp_eu7_placebo, replace
-graph export "../output/figures/g_lp_eu7_placebo.pdf", replace
+graph export "output/figures/g_lp_eu7_placebo.pdf", replace
 
 *===============================================================================
 * Figure 3: EMU20 vs EU7 overlay
@@ -252,7 +252,7 @@ twoway ///
     graphregion(color(white))
 
 gr rename g_lp_emu20_vs_eu7, replace
-graph export "../output/figures/g_lp_emu20_vs_eu7.pdf", replace
+graph export "output/figures/g_lp_emu20_vs_eu7.pdf", replace
 
 di ""
 di "Figures saved: g_lp_eu27_comparison.pdf, g_lp_eu7_placebo.pdf, g_lp_emu20_vs_eu7.pdf"

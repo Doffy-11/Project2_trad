@@ -3,7 +3,7 @@
 * Called at the top of each do-file with: do _setup.do
 * Calling file is responsible for any sample filter (e.g. keep if emu==1),
 * the panel xtset declaration, and LP parameters / forward LHS variables.
-
+pwd
 clear all
 cap drop _all
 cap graph drop _all
@@ -21,7 +21,8 @@ grstyle set legend 10, inside nobox
 *===============================================================================
 * Load panel
 *===============================================================================
-use "../data/clean/panel.dta"
+
+use "data/clean/panel.dta"
 
 *===============================================================================
 * Tradable & Non-Tradable Inflation

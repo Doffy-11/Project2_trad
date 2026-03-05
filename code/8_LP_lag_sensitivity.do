@@ -1,12 +1,10 @@
-
 * 8_LP_lag_sensitivity.do — Lag Sensitivity
 *
 * Runs the baseline LP-IV (EMU20, BH instrument) at four lag structures:
 *   L = 4, 8, 12 (baseline), 16
 * H = 13 horizons throughout. All other choices identical to baseline.
 
-cap cd code
-do _setup.do
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup — EMU20 only
@@ -90,8 +88,22 @@ keep Months b_L4 u90_L4 d90_L4 Fstat_L4 ///
             b_L8 u90_L8 d90_L8 Fstat_L8 ///
             b_L12 u90_L12 d90_L12 Fstat_L12 ///
             b_L16 u90_L16 d90_L16 Fstat_L16
-export delimited "../output/tables/irf_lag_sensitivity.csv", replace
+export delimited "output/tables/irf_lag_sensitivity.csv", replace
 restore
+
+*===============================================================================
+* Capture first-stage F-stats for note
+*===============================================================================
+quietly {
+    summarize Fstat_L4  if _n == 1
+    local fs_L4  : display %5.2f r(mean)
+    summarize Fstat_L8  if _n == 1
+    local fs_L8  : display %5.2f r(mean)
+    summarize Fstat_L12 if _n == 1
+    local fs_L12 : display %5.2f r(mean)
+    summarize Fstat_L16 if _n == 1
+    local fs_L16 : display %5.2f r(mean)
+}
 
 *===============================================================================
 * Overlay Figure
@@ -117,13 +129,12 @@ twoway ///
     xtitle("Months after shock", size(medsmall))                  ///
     xlabel(0(2)12) xscale(range(0 12))                            ///
     ylabel(, labsize(small) format(%5.2f))                        ///
-    note("EMU20. Bartik IV: w{subscript:trad} {&times} BH oil shock. Country FE. vce(robust)." ///
-         "90% CI shown for baseline (L=12) only.",                ///
+    note("First-stage KP F-statistics — L=4: `fs_L4'  |  L=8: `fs_L8'  |  L=12: `fs_L12'  |  L=16: `fs_L16'", ///
          size(vsmall))                                            ///
     graphregion(color(white))
 
 gr rename g_lag_sensitivity, replace
-graph export "../output/figures/g_lag_sensitivity.pdf", replace
+graph export "output/figures/g_lag_sensitivity.pdf", replace
 
 di ""
 di "Figure saved: output/figures/g_lag_sensitivity.pdf"

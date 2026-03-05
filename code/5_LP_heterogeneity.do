@@ -1,4 +1,3 @@
-
 * 5_LP_heterogeneity.do — Heterogeneity Across EMU Groups
 *
 * Splits EMU20 into three economically motivated groups:
@@ -7,10 +6,9 @@
 *   Small open   (country_group_n == 3): IRL, LUX, EST, LVA, LTU, SVK,
 *                                        SVN, MLT, CYP, HRV             (N=10)
 *
-* Produces: overlay IRF figure, irf_heterogeneity.csv, pairwise t-statistics.
+* Produces: three separate IRF figures, irf_heterogeneity.csv, pairwise t-statistics.
 
-cap cd code
-do _setup.do
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup — EMU20 only
@@ -163,7 +161,7 @@ foreach h in 0 3 6 9 12 {
 }
 
 *===============================================================================
-* Save IRF data for table
+* Save IRF data
 *===============================================================================
 preserve
 keep if Months != .
@@ -171,57 +169,114 @@ keep Months ///
      b_core u90_core d90_core u68_core d68_core Fstat_core se_core ///
      b_peri u90_peri d90_peri u68_peri d68_peri Fstat_peri se_peri ///
      b_soe  u90_soe  d90_soe  u68_soe  d68_soe  Fstat_soe  se_soe
-export delimited "../output/tables/irf_heterogeneity.csv", replace
+export delimited "output/tables/irf_heterogeneity.csv", replace
 restore
 
 di ""
 di "IRF data saved: output/tables/irf_heterogeneity.csv"
 
 *===============================================================================
-* Overlay Figure
+* Capture first-stage F-stats for notes
+*===============================================================================
+quietly {
+    summarize Fstat_core if _n == 1
+    local fs_core : display %5.2f r(mean)
+    summarize Fstat_peri if _n == 1
+    local fs_peri : display %5.2f r(mean)
+    summarize Fstat_soe if _n == 1
+    local fs_soe  : display %5.2f r(mean)
+}
+*===============================================================================
+* Graph — Core (N=6)  DEU FRA NLD AUT FIN BEL
 *===============================================================================
 twoway ///
     (rarea u90_core d90_core Months,                                   ///
         fcolor(navy%15) lcolor(navy%15) lw(none))                      ///
-    (rarea u68_core d68_core Months,                                   ///
-        fcolor(navy%30) lcolor(navy%30) lw(none))                      ///
-    (rarea u90_peri d90_peri Months,                                   ///
-        fcolor(cranberry%12) lcolor(cranberry%12) lw(none))            ///
-    (rarea u68_peri d68_peri Months,                                   ///
-        fcolor(cranberry%25) lcolor(cranberry%25) lw(none))            ///
-    (rarea u90_soe d90_soe Months,                                     ///
-        fcolor(forest_green%12) lcolor(forest_green%12) lw(none))      ///
-    (rarea u68_soe d68_soe Months,                                     ///
-        fcolor(forest_green%25) lcolor(forest_green%25) lw(none))      ///
     (line b_core Months,                                               ///
         lcolor(navy) lpattern(solid) lwidth(thick))                    ///
-    (line b_peri Months,                                               ///
-        lcolor(cranberry) lpattern(dash) lwidth(thick))                ///
-    (line b_soe  Months,                                               ///
-        lcolor(forest_green) lpattern(longdash) lwidth(thick))         ///
     (line Zero Months,                                                  ///
         lcolor(black) lpattern(dash) lwidth(thin)),                    ///
-    legend(order(                                                       ///
-        7 "Core (N=6)"                                                 ///
-        8 "Periphery (N=4)"                                            ///
-        9 "Small open (N=10)"                                          ///
-        2 "68% CI"                                                     ///
-        1 "90% CI")                                                    ///
-        size(small) rows(5) pos(5) ring(0))                            ///
-    title("Second-Round Pass-Through: Heterogeneity Across EMU Groups", ///
+    legend(order(2 "Core (N=6)" 1 "90% CI")                           ///
+        size(small) rows(2) pos(5) ring(0))                            ///
+    title("A. Core",                            ///
           color(black) size(medsmall))                                 ///
     ytitle("{&theta}{subscript:h}", size(medsmall))                    ///
     xtitle("Months after shock", size(medsmall))                       ///
     xlabel(0(2)12) xscale(range(0 12))                                 ///
     ylabel(, labsize(small) format(%5.2f))                             ///
-    note("EMU20. Core: DEU FRA NLD AUT FIN BEL. Periphery: ITA ESP PRT GRC." ///
-         "Small open: IRL LUX EST LVA LTU SVK SVN MLT CYP HRV."       ///
-         "Bartik IV: w{subscript:trad} {&times} BH oil shock. 12 lags. Country FE. vce(robust)." ///
-         "90% and 68% CI shown.", size(vsmall))                        ///
+    note("First-stage KP F-statistic: `fs_core'", size(vsmall))       ///
     graphregion(color(white))
 
+gr rename g_core, replace
+*graph export "output/figures/g_het_core.pdf", replace
+
+*===============================================================================
+* Graph — Periphery (N=4) ITA ESP PRT GRC
+*===============================================================================
+twoway ///
+    (rarea u90_peri d90_peri Months,                                   ///
+        fcolor(cranberry%15) lcolor(cranberry%15) lw(none))            ///
+    (line b_peri Months,                                               ///
+        lcolor(cranberry) lpattern(dash) lwidth(thick))                ///
+    (line Zero Months,                                                  ///
+        lcolor(black) lpattern(dash) lwidth(thin)),                    ///
+    legend(order(2 "Periphery (N=4)" 1 "90% CI")                      ///
+        size(small) rows(2) pos(5) ring(0))                            ///
+    title("B. Periphery",                                ///
+          color(black) size(medsmall))                                 ///
+    ytitle("{&theta}{subscript:h}", size(medsmall))                    ///
+    xtitle("Months after shock", size(medsmall))                       ///
+    xlabel(0(2)12) xscale(range(0 12))                                 ///
+    ylabel(, labsize(small) format(%5.2f))                             ///
+    note("First-stage KP F-statistic: `fs_peri'", size(vsmall))       ///
+    graphregion(color(white))
+
+gr rename g_peri, replace
+*graph export "output/figures/g_het_peri.pdf", replace
+
+*===============================================================================
+* Graph — Small Open Economies (N=10) : IRL LUX EST LVA LTU SVK SVN MLT CYP HRV
+*===============================================================================
+twoway ///
+    (rarea u90_soe d90_soe Months,                                     ///
+        fcolor(forest_green%15) lcolor(forest_green%15) lw(none))      ///
+    (line b_soe Months,                                                ///
+        lcolor(forest_green) lpattern(longdash) lwidth(thick))         ///
+    (line Zero Months,                                                  ///
+        lcolor(black) lpattern(dash) lwidth(thin)),                    ///
+    legend(order(2 "Small open (N=10)" 1 "90% CI")                    ///
+        size(small) rows(2) pos(5) ring(0))                            ///
+    title("C. Small Open Economies",     ///
+          color(black) size(medsmall))                                 ///
+    ytitle("{&theta}{subscript:h}", size(medsmall))                    ///
+    xtitle("Months after shock", size(medsmall))                       ///
+    xlabel(0(2)12) xscale(range(0 12))                                 ///
+    ylabel(, labsize(small) format(%5.2f))                             ///
+    note("First-stage KP F-statistic: `fs_soe'", size(vsmall))        ///
+    graphregion(color(white))
+
+gr rename g_soe, replace
+*graph export "output/figures/g_het_soe.pdf", replace
+
+*===============================================================================
+* Combined panel — single column, ycommon
+*===============================================================================
+graph combine g_core g_peri g_soe,                                     ///
+    rows(3) cols(1) iscale(1)                                        ///
+    title("Second-Round Pass-Through: Heterogeneity Across EMU Groups", ///
+        color(black) size(medsmall))                                   ///
+    graphregion(color(white)) imargin(small) ycommon                   ///
+    xsize(4) ysize(9)
+	
+
+
 gr rename g_lp_heterogeneity, replace
-graph export "../output/figures/g_lp_heterogeneity.pdf", replace
+graph export "output/figures/g_lp_heterogeneity.pdf", replace
 
 di ""
-di "Figure saved: output/figures/g_lp_heterogeneity.pdf"
+di "Figures saved:"
+di "  output/figures/g_het_core.pdf"
+di "  output/figures/g_het_peri.pdf"
+di "  output/figures/g_het_soe.pdf"
+di "  output/figures/g_lp_heterogeneity.pdf"
+di "IRF data saved: output/tables/irf_heterogeneity.csv"

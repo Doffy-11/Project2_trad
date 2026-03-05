@@ -1,4 +1,3 @@
-
 * 7_LP_rob_weights.do — Instrument Robustness: Bartik Weight Variants
 *
 * Three weighting specifications for the Bartik instrument:
@@ -8,8 +7,7 @@
 *
 * All specs: Country FE, 12 lags, full sample
 
-cap cd code
-do _setup.do
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup
@@ -127,6 +125,18 @@ di "KP F-statistics — Spec 3 (direct):"
 list Months Fstat_dir if Months != .
 
 *===============================================================================
+* Capture first-stage F-stats for note
+*===============================================================================
+quietly {
+    summarize Fstat_wt  if _n == 1
+    local fs_wt  : display %5.2f r(mean)
+    summarize Fstat_wi  if _n == 1
+    local fs_wi  : display %5.2f r(mean)
+    summarize Fstat_dir if _n == 1
+    local fs_dir : display %5.2f r(mean)
+}
+
+*===============================================================================
 * Overlay Figure
 *===============================================================================
 twoway ///
@@ -151,12 +161,12 @@ twoway ///
     xtitle("Months after shock", size(medsmall))                ///
     xlabel(0(2)12) xscale(range(0 12))                          ///
     ylabel(, labsize(small) format(%5.2f))                      ///
-    note("90% CI shown for baseline only. EMU20. 12 lags. Country FE. vce(robust).", ///
+    note("First-stage KP F-statistics — Baseline: `fs_wt'  |  Import/GDP: `fs_wi'  |  Direct: `fs_dir'", ///
          size(vsmall))                                          ///
     graphregion(color(white))
 
 gr rename g_lp_base_rob_w, replace
-graph export "../output/figures/g_lp_base_rob_w.pdf", replace
+graph export "output/figures/g_lp_base_rob_w.pdf", replace
 
 di ""
 di "Figure saved: output/figures/g_lp_base_rob_w.pdf"

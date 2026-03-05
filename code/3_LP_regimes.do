@@ -7,8 +7,8 @@
 *   (3) Inflation volatility: high vs low (36m rolling std, within-country median)
 * All regressions restricted to EMU20 (emu==1). Baseline spec: L=12.
 
-cap cd code
-do _setup.do
+do "code/_setup.do"
+
 
 *===============================================================================
 * Panel Setup — EMU20 only
@@ -181,7 +181,7 @@ keep Months ///
      b_neer_dep u90_neer_dep d90_neer_dep Fstat_neer_dep    ///
      b_vol_lo u90_vol_lo d90_vol_lo Fstat_vol_lo            ///
      b_vol_hi u90_vol_hi d90_vol_hi Fstat_vol_hi
-export delimited "../output/tables/irf_state_dependence.csv", replace
+export delimited "output/tables/irf_state_dependence.csv", replace
 restore
 
 *===============================================================================
@@ -279,7 +279,7 @@ graph combine ///
     graphregion(color(white)) xsize(8) ysize(10)
 
 gr rename g_state_dependence, replace
-graph export "../output/figures/g_state_dependence.pdf", replace
+graph export "output/figures/g_state_dependence.pdf", replace
 
 di ""
 di "Figure saved: output/figures/g_state_dependence.pdf"

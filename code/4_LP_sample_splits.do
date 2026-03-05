@@ -1,4 +1,3 @@
-
 * 4_LP_sample_splits.do — Pre vs Post COVID Sample Split (EMU20)
 *
 *   Full sample:   1998m1–2025m12 (N=20, T=336)
@@ -7,8 +6,7 @@
 *
 * Restricted to EMU20 (emu==1) throughout.
 
-cap cd code
-do _setup.do
+do "code/_setup.do"
 
 *===============================================================================
 * Panel Setup — EMU20 only
@@ -40,7 +38,7 @@ gen Months = _n - 1 if _n <= $hmax + 1
 gen Zero   = 0      if _n <= $hmax + 1
 
 foreach stub in full pre post {
-    foreach v in b u90 d90 u68 d68 Fstat {
+    foreach v in b u90 d90 Fstat {
         cap drop `v'_`stub'
         gen `v'_`stub' = .
     }
@@ -57,8 +55,6 @@ qui forv h = 0/$hmax {
     replace b_full     = _b[pi_trad]                       if _n == `h' + 1
     replace u90_full   = _b[pi_trad] + 1.645*_se[pi_trad] if _n == `h' + 1
     replace d90_full   = _b[pi_trad] - 1.645*_se[pi_trad] if _n == `h' + 1
-    replace u68_full   = _b[pi_trad] + 1.000*_se[pi_trad] if _n == `h' + 1
-    replace d68_full   = _b[pi_trad] - 1.000*_se[pi_trad] if _n == `h' + 1
     replace Fstat_full = e(widstat)                        if _n == `h' + 1
 }
 di "KP F (Full sample): " Fstat_full[1]
@@ -74,8 +70,6 @@ qui forv h = 0/$hmax {
     replace b_pre     = _b[pi_trad]                       if _n == `h' + 1
     replace u90_pre   = _b[pi_trad] + 1.645*_se[pi_trad] if _n == `h' + 1
     replace d90_pre   = _b[pi_trad] - 1.645*_se[pi_trad] if _n == `h' + 1
-    replace u68_pre   = _b[pi_trad] + 1.000*_se[pi_trad] if _n == `h' + 1
-    replace d68_pre   = _b[pi_trad] - 1.000*_se[pi_trad] if _n == `h' + 1
     replace Fstat_pre = e(widstat)                        if _n == `h' + 1
 }
 di "KP F (Pre-2020):     " Fstat_pre[1]
@@ -91,8 +85,6 @@ qui forv h = 0/$hmax {
     replace b_post     = _b[pi_trad]                       if _n == `h' + 1
     replace u90_post   = _b[pi_trad] + 1.645*_se[pi_trad] if _n == `h' + 1
     replace d90_post   = _b[pi_trad] - 1.645*_se[pi_trad] if _n == `h' + 1
-    replace u68_post   = _b[pi_trad] + 1.000*_se[pi_trad] if _n == `h' + 1
-    replace d68_post   = _b[pi_trad] - 1.000*_se[pi_trad] if _n == `h' + 1
     replace Fstat_post = e(widstat)                        if _n == `h' + 1
 }
 di "KP F (Post-2020):    " Fstat_post[1]
@@ -114,48 +106,115 @@ list Months b_full b_pre b_post if Months != .
 preserve
 keep if Months != .
 keep Months ///
-     b_full u90_full d90_full u68_full d68_full Fstat_full ///
-     b_pre  u90_pre  d90_pre  u68_pre  d68_pre  Fstat_pre  ///
-     b_post u90_post d90_post u68_post d68_post Fstat_post
-export delimited "../output/tables/irf_sample_splits.csv", replace
+     b_full u90_full d90_full Fstat_full ///
+     b_pre  u90_pre  d90_pre  Fstat_pre  ///
+     b_post u90_post d90_post Fstat_post
+export delimited "output/tables/irf_sample_splits.csv", replace
 restore
 
 *===============================================================================
-* Overlay Figure
+* Capture first-stage F-stats for graph notes
+*===============================================================================
+quietly {
+    summarize Fstat_full if Months == 0
+    local fs_full : display %5.2f r(mean)
+    summarize Fstat_pre if Months == 0
+    local fs_pre  : display %5.2f r(mean)
+    summarize Fstat_post if Months == 0
+    local fs_post : display %5.2f r(mean)
+}
+
+*===============================================================================
+* Graph — Full Sample (1998–2025)
 *===============================================================================
 twoway ///
     (rarea u90_full d90_full Months,                             ///
         fcolor(blue%15) lcolor(blue%15) lw(none))                ///
-    (rarea u68_full d68_full Months,                             ///
-        fcolor(blue%30) lcolor(blue%30) lw(none))                ///
     (line b_full Months,                                         ///
         lcolor(blue) lpattern(solid) lwidth(thick))              ///
-    (line b_pre  Months,                                         ///
-        lcolor(gs6) lpattern(shortdash) lwidth(medthick))        ///
-    (line b_post Months,                                         ///
-        lcolor(cranberry) lpattern(dash) lwidth(medthick))       ///
     (line Zero Months,                                           ///
         lcolor(black) lpattern(dash) lwidth(thin)),              ///
-    legend(order(                                                 ///
-        3 "Full sample (1998–2025)"                              ///
-        4 "Pre-COVID (1998–2019)"                                ///
-        5 "Post-COVID (2020–2025)"                               ///
-        2 "68% CI (full)"                                        ///
-        1 "90% CI (full)")                                       ///
-        size(small) rows(5) pos(5) ring(0))                      ///
-    title("Sample Stability: Pre vs Post COVID",                  ///
+    legend(order(2 "Full sample (1998-2025)" 1 "90% CI")         ///
+        size(small) rows(2) pos(5) ring(0))                      ///
+    title("A. Full Sample (1998-2025)",                             ///
           color(black) size(medsmall))                           ///
     ytitle("{&theta}{subscript:h}", size(medsmall))              ///
     xtitle("Months after shock", size(medsmall))                 ///
     xlabel(0(2)12) xscale(range(0 12))                           ///
     ylabel(, labsize(small) format(%5.2f))                       ///
-    note("EMU20. Bartik IV: w{subscript:trad} {&times} BH oil shock. 12 lags. Country FE. vce(robust)." ///
-         "CI bands shown for full sample only.", size(vsmall))   ///
+    note("First-stage KP F-statistic: `fs_full'", size(vsmall)) ///
     graphregion(color(white))
 
+gr rename g_full, replace
+graph export "output/figures/g_split_full.pdf", replace
+
+*===============================================================================
+* Graph — Pre-COVID (1998–2019)
+*===============================================================================
+twoway ///
+    (rarea u90_pre d90_pre Months,                               ///
+        fcolor(gs6%15) lcolor(gs6%15) lw(none))                  ///
+    (line b_pre Months,                                          ///
+        lcolor(gs6) lpattern(solid) lwidth(thick))        ///
+    (line Zero Months,                                           ///
+        lcolor(black) lpattern(dash) lwidth(thin)),              ///
+    legend(order(2 "Pre-COVID (1998-2019)" 1 "90% CI")           ///
+        size(small) rows(2) pos(5) ring(0))                      ///
+    title("B. Pre-COVID (1998-2019)",                               ///
+          color(black) size(medsmall))                           ///
+    ytitle("{&theta}{subscript:h}", size(medsmall))              ///
+    xtitle("Months after shock", size(medsmall))                 ///
+    xlabel(0(2)12) xscale(range(0 12))                           ///
+    ylabel(, labsize(small) format(%5.2f))                       ///
+    note("First-stage KP F-statistic: `fs_pre'", size(vsmall))  ///
+    graphregion(color(white))
+
+gr rename g_pre, replace
+graph export "output/figures/g_split_pre.pdf", replace
+
+*===============================================================================
+* Graph — Post-COVID (2020–2025)
+*===============================================================================
+twoway ///
+    (rarea u90_post d90_post Months,                             ///
+        fcolor(cranberry%15) lcolor(cranberry%15) lw(none))      ///
+    (line b_post Months,                                         ///
+        lcolor(cranberry) lpattern(solid) lwidth(thick))       ///
+    (line Zero Months,                                           ///
+        lcolor(black) lpattern(dash) lwidth(thin)),              ///
+    legend(order(2 "Post-COVID (2020-2025)" 1 "90% CI")          ///
+        size(small) rows(2) pos(5) ring(0))                      ///
+    title("C. Post-COVID (2020-2025)",                              ///
+          color(black) size(medsmall))                           ///
+    ytitle("{&theta}{subscript:h}", size(medsmall))              ///
+    xtitle("Months after shock", size(medsmall))                 ///
+    xlabel(0(2)12) xscale(range(0 12))                           ///
+    ylabel(, labsize(small) format(%5.2f))                       ///
+    note("First-stage KP F-statistic: `fs_post'", size(vsmall)) ///
+    graphregion(color(white))
+
+gr rename g_post, replace
+graph export "output/figures/g_split_post.pdf", replace
+
+*===============================================================================
+* Combined panel
+*===============================================================================
+graph combine g_full g_pre g_post,                               ///
+    rows(3) cols(1) iscale(1)                                  ///
+    title("Sample Stability: Pre vs Post COVID",                   ///
+        color(black) size(medsmall))                              ///
+    graphregion(color(white)) imargin(small) ycommon             ///
+    xsize(4) ysize(9)
+
+
+	
 gr rename g_sample_splits, replace
-graph export "../output/figures/g_sample_splits.pdf", replace
+graph export "output/figures/g_sample_splits.pdf", replace
 
 di ""
-di "Figure saved: output/figures/g_sample_splits.pdf"
+di "Figures saved:"
+di "  output/figures/g_split_full.pdf"
+di "  output/figures/g_split_pre.pdf"
+di "  output/figures/g_split_post.pdf"
+di "  output/figures/g_sample_splits.pdf"
 di "IRF data saved: output/tables/irf_sample_splits.csv"
