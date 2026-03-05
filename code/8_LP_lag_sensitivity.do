@@ -1,32 +1,16 @@
 
-* Phase 6 — Lag Sensitivity
+* 8_LP_lag_sensitivity.do — Lag Sensitivity
+*
 * Runs the baseline LP-IV (EMU20, BH instrument) at four lag structures:
 *   L = 4, 8, 12 (baseline), 16
 * H = 13 horizons throughout. All other choices identical to baseline.
-* Produces an overlay figure with all four lag structures.
-* 16 lags is the literature standard for monthly LP-IV (cf. Jordà 2005,
-* Plagborg-Møller & Wolf 2021). L=12 is the paper's baseline.
 
 cap cd code
-
-clear all
-cap drop _all
-cap graph drop _all
+do _setup.do
 
 *===============================================================================
-* Graph Settings
+* Panel Setup — EMU20 only
 *===============================================================================
-grstyle clear
-set scheme s2color
-grstyle init
-grstyle set plain, horizontal grid
-grstyle set symbol
-grstyle set legend 10, inside nobox
-
-*===============================================================================
-* Load panel — restrict to EMU20
-*===============================================================================
-use "../data/clean/panel.dta"
 keep if emu == 1
 
 egen id = group(code)
@@ -34,34 +18,6 @@ sort code year month
 gen time = ym(year, month)
 format time %tm
 xtset id time
-
-*===============================================================================
-* Variable Construction
-*===============================================================================
-gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
-
-gen pi_trad = (pi_food        * w_food        ///
-             + pi_clothing    * w_clothing     ///
-             + pi_furnishing  * w_furnishing   ///
-             + pi_transport   * w_transport    ///
-             + pi_alcohol     * w_alcohol)     ///
-             / w_trad
-
-gen w_nontrad = w_housing + w_health + w_education ///
-              + w_restaurants + w_other             ///
-              + w_communication + w_recreation
-
-gen pi_nontrad = (pi_housing       * w_housing       ///
-                + pi_health        * w_health        ///
-                + pi_education     * w_education     ///
-                + pi_restaurants   * w_restaurants   ///
-                + pi_other         * w_other         ///
-                + pi_communication * w_communication ///
-                + pi_recreation    * w_recreation)   ///
-                / w_nontrad
-
-gen Z_bartik = w_trad * bh_oil_price_exp_shock
-label var Z_bartik "Bartik IV: w_trad x BH oil shock"
 
 *===============================================================================
 * Forward LHS Variables (generated once, valid for all lag lengths)

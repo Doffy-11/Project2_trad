@@ -1,36 +1,18 @@
 
-* Phase 6 — Pre vs Post COVID Sample Split (Extended Dataset)
-* Confirms the pre/post-2020 sample split results from 2.0_LP_samples.do
-* are stable on the extended EMU20 dataset (1998m1–2025m12, N=20 countries).
+* 4_LP_sample_splits.do — Pre vs Post COVID Sample Split (EMU20)
 *
 *   Full sample:   1998m1–2025m12 (N=20, T=336)
 *   Pre-COVID:     1998m1–2019m12 (T=264)
-*   Post-COVID:    2020m1–2025m12 (T=72, ~6 years)
+*   Post-COVID:    2020m1–2025m12 (T=72)
 *
 * Restricted to EMU20 (emu==1) throughout.
-* Comparison with 2.0_LP_samples.do: same split, now on extended sample
-* with Greece included and full 2020-2025 post-COVID period.
 
 cap cd code
-
-clear all
-cap drop _all
-cap graph drop _all
+do _setup.do
 
 *===============================================================================
-* Graph Settings
+* Panel Setup — EMU20 only
 *===============================================================================
-grstyle clear
-set scheme s2color
-grstyle init
-grstyle set plain, horizontal grid
-grstyle set symbol
-grstyle set legend 10, inside nobox
-
-*===============================================================================
-* Load panel — restrict to EMU20
-*===============================================================================
-use "../data/clean/panel.dta"
 keep if emu == 1
 
 egen id = group(code)
@@ -38,34 +20,6 @@ sort code year month
 gen time = ym(year, month)
 format time %tm
 xtset id time
-
-*===============================================================================
-* Variable Construction
-*===============================================================================
-gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
-
-gen pi_trad = (pi_food        * w_food        ///
-             + pi_clothing    * w_clothing     ///
-             + pi_furnishing  * w_furnishing   ///
-             + pi_transport   * w_transport    ///
-             + pi_alcohol     * w_alcohol)     ///
-             / w_trad
-
-gen w_nontrad = w_housing + w_health + w_education ///
-              + w_restaurants + w_other             ///
-              + w_communication + w_recreation
-
-gen pi_nontrad = (pi_housing       * w_housing       ///
-                + pi_health        * w_health        ///
-                + pi_education     * w_education     ///
-                + pi_restaurants   * w_restaurants   ///
-                + pi_other         * w_other         ///
-                + pi_communication * w_communication ///
-                + pi_recreation    * w_recreation)   ///
-                / w_nontrad
-
-gen Z_bartik = w_trad * bh_oil_price_exp_shock
-label var Z_bartik "Bartik IV: w_trad x BH oil shock"
 
 *===============================================================================
 * LP Parameters
@@ -128,8 +82,6 @@ di "KP F (Pre-2020):     " Fstat_pre[1]
 
 *===============================================================================
 * LP-IV: Post-COVID (year >= 2020)
-* Note: only ~72 months of post-COVID data; KP F may be lower due to
-* fewer observations, and CIs will be wider. Flag if F < 10.
 *===============================================================================
 qui forv h = 0/$hmax {
     ivreghdfe pi_nt_h`h' (pi_trad = Z_bartik)              ///

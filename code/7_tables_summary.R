@@ -1,12 +1,17 @@
-# Run this script from the code/ directory:
-#   cd code && Rscript 04_tables.R
 
-library(haven)
-library(dplyr)
+# 7_tables_summary.R — Summary Tables (LaTeX)
+# Produces three tables from panel.dta:
+#   tab1_summary_stats.tex  — descriptive statistics
+#   tab2_data_sources.tex   — variable definitions and sources
+#   tab3_country_coverage.tex — country-level sample coverage
+# Run from the code/ directory.
+
+suppressMessages(library(haven))
+suppressMessages(library(dplyr))
 
 panel <- read_dta("../data/clean/panel.dta")
 
-# ── Construct tradable and non-tradable inflation (mirrors Stata do-files) ────
+# ── Construct tradable and non-tradable inflation (mirrors Stata do-files) ─────
 panel <- panel %>%
   mutate(
     w_trad    = w_food + w_clothing + w_furnishing + w_transport + w_alcohol,
@@ -21,14 +26,13 @@ panel <- panel %>%
                   pi_recreation * w_recreation) / w_nontrad
   )
 
-# ── Helper: write a booktabs LaTeX table ─────────────────────────────────────
+# ── Helper: write a booktabs LaTeX table ──────────────────────────────────────
 write_booktabs <- function(df, caption, label, file, note = NULL,
                            col_align = NULL) {
   nc <- ncol(df)
   if (is.null(col_align)) col_align <- paste(c("l", rep("r", nc - 1)),
                                               collapse = "")
   header <- paste(names(df), collapse = " & ")
-
   rows <- apply(df, 1, function(r) paste(r, collapse = " & "))
 
   out <- c(
@@ -95,7 +99,7 @@ write_booktabs(
   note    = paste0("Inflation rates are year-over-year percent changes. ",
                    "GSCPI is standardized with mean zero and unit variance. ",
                    "NEER change and oil shocks are in log points. ",
-                   "Sample: 19 euro area countries, January 1998 -- December 2025."),
+                   "Sample: EMU20 euro area countries, January 1998 -- December 2025."),
   col_align = "lrrrrr"
 )
 
@@ -179,7 +183,7 @@ write_booktabs(
   label   = "tab:coverage",
   file    = "../output/tables/tab3_country_coverage.tex",
   note    = paste0("$N$ counts non-missing observations of headline HICP inflation. ",
-                   "Sample: 19 euro area member states, January 1998 -- December 2025."),
+                   "Sample: EMU20 euro area member states, January 1998 -- December 2025."),
   col_align = "llccc"
 )
 

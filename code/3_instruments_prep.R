@@ -1,11 +1,11 @@
 
-# Phase 4 — Instrument Preparation
+# 3_instruments_prep.R — Instrument Preparation
 # Constructs AR innovations for two alternative instruments:
 #   1. GSCPI shocks:         AR(p) residuals on the GSCPI level series
 #   2. IMF commodity shocks: AR(p) residuals on monthly log-differences of the
 #                             IMF non-fuel primary commodity price index
 # AR order selected by AIC over p = 1..12.
-# Innovations are saved as CSVs for use in 7.1_LP_rob_instruments.do.
+# Innovations saved to data/clean/ for use in 6_LP_rob_instruments.do.
 # Run from code/ directory or project root.
 
 suppressMessages({
@@ -20,7 +20,6 @@ data_dir <- "../data/clean"
 # ── 1. Load GSCPI ──────────────────────────────────────────────────────────────
 gscpi_raw <- read.xlsx(file.path(data_dir, "gscpi.xlsx"))
 # Columns: year, month, gscpi
-# GSCPI is already standardised (zero-mean, unit-variance over the NY Fed sample)
 
 cat("GSCPI: N =", nrow(gscpi_raw), " | from",
     paste(gscpi_raw$year[1], gscpi_raw$month[1], sep="-"), "to",
@@ -67,21 +66,15 @@ p_imf <- select_ar_order(imf_clean$dln_imf)
 
 # ── 4. Fit AR and extract residuals ────────────────────────────────────────────
 fit_ar_resid <- function(x, p, labels_df) {
-  # x: numeric vector (possibly with leading NAs)
-  # p: AR order
-  # Returns a data.frame with year, month, shock (= AR residual)
   n <- length(x)
-  # OLS AR(p): regress x_t on x_{t-1}..x_{t-p}
   y <- x[(p+1):n]
   X <- do.call(cbind, lapply(1:p, function(k) x[(p+1-k):(n-k)]))
-  X <- cbind(1, X)   # add intercept
-  # Drop rows with any NA
+  X <- cbind(1, X)
   ok <- complete.cases(y, X)
   y_ok <- y[ok]; X_ok <- X[ok, ]
   coef <- solve(t(X_ok) %*% X_ok) %*% t(X_ok) %*% y_ok
   resid_ok <- y_ok - X_ok %*% coef
 
-  # Place residuals back into full-length vector
   shock_full <- rep(NA_real_, n)
   shock_full[(p+1):n][ok] <- as.numeric(resid_ok)
 

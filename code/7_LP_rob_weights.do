@@ -1,27 +1,20 @@
 
-* Run this do-file from the code/ directory.
-* From the project root in Stata: cd code
-* Then: do 1.1_LP_base_rob1.do
+* 7_LP_rob_weights.do — Instrument Robustness: Bartik Weight Variants
+*
+* Three weighting specifications for the Bartik instrument:
+*   Spec 1 (baseline): Z_bartik_wt  = w_trad        x bh_oil_price_exp_shock
+*   Spec 2 (robust):   Z_bartik_wi  = wi_imp_gdp/100 x bh_oil_price_exp_shock
+*   Spec 3 (robust):   Z_direct     = bh_oil_price_exp_shock (no scaling)
+*
+* All specs: Country FE, 12 lags, full sample
+
 cap cd code
-
-clear all
-cap drop _all
-cap graph drop _all
+do _setup.do
 
 *===============================================================================
-* Graph Settings
+* Panel Setup
 *===============================================================================
-grstyle clear
-set scheme s2color
-grstyle init
-grstyle set plain, horizontal grid 
-grstyle set symbol
-grstyle set legend 10, inside nobox 
-
-*===============================================================================
-* Load & Panel Setup
-*===============================================================================
-use "../data/clean/panel.dta"
+keep if emu == 1
 
 egen id = group(code)
 sort code year month
@@ -30,52 +23,9 @@ format time %tm
 xtset id time
 
 *===============================================================================
-* Tradable & Non-Tradable Inflation
+* Weight Variants
 *===============================================================================
-
-* ── Tradable ──────────────────────────────────────────────────────────────────
-gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
-
-gen pi_trad = (pi_food        * w_food        ///
-             + pi_clothing    * w_clothing     ///
-             + pi_furnishing  * w_furnishing   ///
-             + pi_transport   * w_transport    ///
-             + pi_alcohol     * w_alcohol)     ///
-             / w_trad
-
-label var pi_trad "Tradable Inflation (Food, Clothing, Furnishing, Transport, Alcohol)"
-
-* ── Non-Tradable ──────────────────────────────────────────────────────────────
-gen w_nontrad = w_housing + w_health + w_education ///
-              + w_restaurants + w_other             ///
-              + w_communication + w_recreation
-
-gen pi_nontrad = (pi_housing       * w_housing       ///
-                + pi_health        * w_health        ///
-                + pi_education     * w_education     ///
-                + pi_restaurants   * w_restaurants   ///
-                + pi_other         * w_other         ///
-                + pi_communication * w_communication ///
-                + pi_recreation    * w_recreation)   ///
-                / w_nontrad
-
-label var pi_nontrad "Non-Tradable Inflation (Housing, Health, Education, Restaurants, Other, Comm, Recreation)"
-
-*===============================================================================
-* Robustness: Three Instrument Specifications
-*
-* Spec 1 (baseline): Z_bartik_wt  = w_trad        x bh_oil_price_exp_shock
-* Spec 2 (robust):   Z_bartik_wi  = wi_imp_gdp/100 x bh_oil_price_exp_shock
-* Spec 3 (robust):   Z_direct     = bh_oil_price_exp_shock (no scaling)
-*
-* All specs: Country FE, 12 lags, full sample
-*===============================================================================
-
-global hmax = 13
-global lags  = 12
-
-* ── Instruments ───────────────────────────────────────────────────────────────
-gen Z_bartik_wt = w_trad            * bh_oil_price_exp_shock
+gen Z_bartik_wt = Z_bartik
 gen Z_bartik_wi = (wi_imp_gdp / 100) * bh_oil_price_exp_shock
 gen Z_direct    = bh_oil_price_exp_shock
 
@@ -83,13 +33,20 @@ label var Z_bartik_wt "Bartik IV: Tradables Weight x Market Oil Price Shock"
 label var Z_bartik_wi "Bartik IV: Import/GDP Weight x Market Oil Price Shock"
 label var Z_direct    "Direct IV: Market Oil Price Shock (no scaling)"
 
-* ── Forward LHS Variables ─────────────────────────────────────────────────────
+*===============================================================================
+* LP Parameters
+*===============================================================================
+global hmax = 13
+global lags  = 12
+
 forv h = 0/$hmax {
     gen pi_nt_h`h' = F`h'.pi_nontrad
     label var pi_nt_h`h' "Non-Tradable Inflation, horizon h=`h'"
 }
 
-* ── IRF Storage ───────────────────────────────────────────────────────────────
+*===============================================================================
+* IRF Storage
+*===============================================================================
 cap drop Months Zero
 cap drop b_wt u_wt d_wt Fstat_wt
 cap drop b_wi u_wi d_wi Fstat_wi
@@ -105,7 +62,9 @@ foreach stub in wt wi dir {
     gen Fstat_`stub' = .
 }
 
-* ── LP-IV Loop: Spec 1 — w_trad (baseline) ───────────────────────────────────
+*===============================================================================
+* LP-IV Loop: Spec 1 — w_trad (baseline)
+*===============================================================================
 qui forv h = 0/$hmax {
     ivreghdfe pi_nt_h`h'                        ///
         (pi_trad = Z_bartik_wt)                  ///
@@ -113,7 +72,7 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
         l(1/$lags).dln_neer                      ///
-        , absorb(id ) vce(robust)
+        , absorb(id) vce(robust)
 
     replace b_wt     = _b[pi_trad]                       if _n == `h' + 1
     replace u_wt     = _b[pi_trad] + 1.645*_se[pi_trad]  if _n == `h' + 1
@@ -121,7 +80,9 @@ qui forv h = 0/$hmax {
     replace Fstat_wt = e(widstat)                         if _n == `h' + 1
 }
 
-* ── LP-IV Loop: Spec 2 — wi_imp_gdp/100 ──────────────────────────────────────
+*===============================================================================
+* LP-IV Loop: Spec 2 — wi_imp_gdp/100
+*===============================================================================
 qui forv h = 0/$hmax {
     ivreghdfe pi_nt_h`h'                        ///
         (pi_trad = Z_bartik_wi)                  ///
@@ -129,14 +90,16 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
         l(1/$lags).dln_neer                      ///
-        , absorb(id ) vce(robust)
+        , absorb(id) vce(robust)
     replace b_wi     = _b[pi_trad]                       if _n == `h' + 1
     replace u_wi     = _b[pi_trad] + 1.645*_se[pi_trad]  if _n == `h' + 1
     replace d_wi     = _b[pi_trad] - 1.645*_se[pi_trad]  if _n == `h' + 1
     replace Fstat_wi = e(widstat)                         if _n == `h' + 1
 }
 
-* ── LP-IV Loop: Spec 3 — direct, no scaling ──────────────────────────────────
+*===============================================================================
+* LP-IV Loop: Spec 3 — direct, no scaling
+*===============================================================================
 qui forv h = 0/$hmax {
     ivreghdfe pi_nt_h`h'                        ///
         (pi_trad = Z_direct)                     ///
@@ -144,14 +107,16 @@ qui forv h = 0/$hmax {
         l(1/$lags).pi_trad                       ///
         l(1/$lags).ur                            ///
         l(1/$lags).dln_neer                      ///
-        , absorb(id ) vce(robust)
+        , absorb(id) vce(robust)
     replace b_dir     = _b[pi_trad]                       if _n == `h' + 1
     replace u_dir     = _b[pi_trad] + 1.645*_se[pi_trad]  if _n == `h' + 1
     replace d_dir     = _b[pi_trad] - 1.645*_se[pi_trad]  if _n == `h' + 1
     replace Fstat_dir = e(widstat)                         if _n == `h' + 1
 }
 
-* ── First Stage Diagnostics ───────────────────────────────────────────────────
+*===============================================================================
+* Diagnostics
+*===============================================================================
 di "KP F-statistics — Spec 1 (w_trad Bartik):"
 list Months Fstat_wt if Months != .
 
@@ -161,7 +126,9 @@ list Months Fstat_wi if Months != .
 di "KP F-statistics — Spec 3 (direct):"
 list Months Fstat_dir if Months != .
 
-* ── Overlay Plot ──────────────────────────────────────────────────────────────
+*===============================================================================
+* Overlay Figure
+*===============================================================================
 twoway ///
     (rarea u_wt d_wt Months,                                    ///
         fcolor(blue%15) lcolor(blue%15) lw(none))               ///
@@ -184,9 +151,12 @@ twoway ///
     xtitle("Months after shock", size(medsmall))                ///
     xlabel(0(2)12) xscale(range(0 12))                          ///
     ylabel(, labsize(small) format(%5.2f))                      ///
-    note("90% CI shown for baseline only. Full sample. 12 lags. Country FE.", ///
+    note("90% CI shown for baseline only. EMU20. 12 lags. Country FE. vce(robust).", ///
          size(vsmall))                                          ///
     graphregion(color(white))
 
 gr rename g_lp_base_rob_w, replace
 graph export "../output/figures/g_lp_base_rob_w.pdf", replace
+
+di ""
+di "Figure saved: output/figures/g_lp_base_rob_w.pdf"

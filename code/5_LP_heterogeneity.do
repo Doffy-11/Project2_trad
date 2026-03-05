@@ -1,50 +1,20 @@
 
-* Phase 5 — Heterogeneity Analysis
-* Splits the EMU20 into three economically motivated groups and runs the
-* baseline LP-IV specification separately for each:
+* 5_LP_heterogeneity.do — Heterogeneity Across EMU Groups
 *
+* Splits EMU20 into three economically motivated groups:
 *   Core         (country_group_n == 1): DEU, FRA, NLD, AUT, FIN, BEL  (N=6)
 *   Periphery    (country_group_n == 2): ITA, ESP, PRT, GRC              (N=4)
 *   Small open   (country_group_n == 3): IRL, LUX, EST, LVA, LTU, SVK,
 *                                        SVN, MLT, CYP, HRV             (N=10)
 *
-* Specification identical to baseline (6.0_LP_EMU20_replication.do):
-*   ivreghdfe pi_nt_h`h' (pi_trad = Z_bartik)
-*             l(1/12).pi_nontrad l(1/12).pi_trad l(1/12).ur l(1/12).dln_neer
-*             , absorb(id) vce(robust)
-*
-* Produces:
-*   (1) Overlay IRF figure: all three groups on the same axes
-*   (2) IRF CSV for table production: irf_heterogeneity.csv
-*   (3) Pairwise group-difference t-statistics (independent samples):
-*       t = (b_g1 - b_g2) / sqrt(se_g1^2 + se_g2^2)
-*       reported at selected horizons h = 0, 3, 6, 9, 12
-*
-* Note on small samples: Periphery has only 4 countries. The first-stage
-* F-statistic is reported; if KP F < 10 for any group the result is flagged.
+* Produces: overlay IRF figure, irf_heterogeneity.csv, pairwise t-statistics.
 
 cap cd code
-
-clear all
-cap drop _all
-cap graph drop _all
+do _setup.do
 
 *===============================================================================
-* Graph Settings
+* Panel Setup — EMU20 only
 *===============================================================================
-grstyle clear
-set scheme s2color
-grstyle init
-grstyle set plain, horizontal grid
-grstyle set symbol
-grstyle set legend 10, inside nobox
-
-*===============================================================================
-* Load full panel
-*===============================================================================
-use "../data/clean/panel.dta"
-
-* Restrict to EMU20 (country_group_n 1-3)
 keep if emu == 1
 
 egen id = group(code)
@@ -54,54 +24,18 @@ format time %tm
 xtset id time
 
 *===============================================================================
-* Tradable & Non-Tradable Inflation (identical to baseline)
-*===============================================================================
-
-gen w_trad = w_food + w_clothing + w_furnishing + w_transport + w_alcohol
-
-gen pi_trad = (pi_food        * w_food        ///
-             + pi_clothing    * w_clothing     ///
-             + pi_furnishing  * w_furnishing   ///
-             + pi_transport   * w_transport    ///
-             + pi_alcohol     * w_alcohol)     ///
-             / w_trad
-
-label var pi_trad "Tradable Inflation"
-
-gen w_nontrad = w_housing + w_health + w_education ///
-              + w_restaurants + w_other             ///
-              + w_communication + w_recreation
-
-gen pi_nontrad = (pi_housing       * w_housing       ///
-                + pi_health        * w_health        ///
-                + pi_education     * w_education     ///
-                + pi_restaurants   * w_restaurants   ///
-                + pi_other         * w_other         ///
-                + pi_communication * w_communication ///
-                + pi_recreation    * w_recreation)   ///
-                / w_nontrad
-
-label var pi_nontrad "Non-Tradable Inflation"
-
-gen Z_bartik = w_trad * bh_oil_price_exp_shock
-label var Z_bartik "Bartik IV: w_trad x BH oil shock"
-
-*===============================================================================
-* LP parameters
+* LP Parameters
 *===============================================================================
 global hmax = 13
 global lags  = 12
 
-*===============================================================================
-* Forward LHS: Non-Tradable Inflation
-*===============================================================================
 forv h = 0/$hmax {
     gen pi_nt_h`h' = F`h'.pi_nontrad
     label var pi_nt_h`h' "Non-Tradable Inflation, h=`h'"
 }
 
 *===============================================================================
-* IRF storage: point estimates, 90/68% CI, KP F-stat, SE
+* IRF Storage
 *===============================================================================
 cap drop Months Zero
 foreach stub in core peri soe {
@@ -113,13 +47,13 @@ foreach stub in core peri soe {
     gen u68_`stub'   = .
     gen d68_`stub'   = .
     gen Fstat_`stub' = .
-    gen se_`stub'    = .   // stored for pairwise t-tests
+    gen se_`stub'    = .
 }
 gen Months = _n - 1 if _n <= $hmax + 1
 gen Zero   = 0      if _n <= $hmax + 1
 
 *===============================================================================
-* LP-IV: Core (country_group_n == 1: DEU FRA NLD AUT FIN BEL)
+* LP-IV: Core (country_group_n == 1)
 *===============================================================================
 qui forv h = 0/$hmax {
 
@@ -142,9 +76,7 @@ qui forv h = 0/$hmax {
 }
 
 *===============================================================================
-* LP-IV: Periphery (country_group_n == 2: ITA ESP PRT GRC)
-* NOTE: N=4 countries. If KP F < 10, results are flagged as potentially
-* unreliable due to limited cross-sectional variation in the first stage.
+* LP-IV: Periphery (country_group_n == 2)
 *===============================================================================
 qui forv h = 0/$hmax {
 
@@ -190,7 +122,7 @@ qui forv h = 0/$hmax {
 }
 
 *===============================================================================
-* Diagnostics: F-statistics and point estimates
+* Diagnostics
 *===============================================================================
 di ""
 di "KP F-statistics by group:"
@@ -201,8 +133,7 @@ di "Point estimates — Core vs Periphery vs SOE:"
 list Months b_core b_peri b_soe if Months != .
 
 *===============================================================================
-* Pairwise t-statistics (independent samples: t = Δb / sqrt(se1² + se2²))
-* Evaluated at selected horizons h = 0, 3, 6, 9, 12
+* Pairwise t-statistics (independent samples)
 *===============================================================================
 di ""
 di "Pairwise group-difference t-statistics (two-sided, N(0,1) critical 1.96):"
@@ -247,7 +178,7 @@ di ""
 di "IRF data saved: output/tables/irf_heterogeneity.csv"
 
 *===============================================================================
-* Overlay Figure: Three groups on the same axes
+* Overlay Figure
 *===============================================================================
 twoway ///
     (rarea u90_core d90_core Months,                                   ///
